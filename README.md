@@ -38,6 +38,14 @@ Phone → Settings → **Night** switches between Dark, Normal and Bright nights
 
 Downtown (north) and Lowtown (south) are one continuous map now: walk or drive straight down Grand Ave into Sunset Blvd, no loading. Buses, cabs and the Red Line still get you across town fast. Both big junctions have working traffic lights; cars stop at red lights, for each other, and for people, and you can't walk through them. Every interior has a lit EXIT door. The phone Map shows the whole city: drag to pan, pinch or +/- to zoom, Me to follow yourself, City for the full view.
 
+## Bel Vista, Palm Shore and the airport
+
+South of Lowtown, Sunset Blvd keeps going:
+- **Bel Vista**: the rich hills. The pink Bel Vista Hotel (lobby, Polo Bar), the designer shops of Regent Row, hillside villas with pools, and the big white letters on the hill.
+- **Palm Shore**: the beach. Boardwalk, surf shack (rent a board and catch a wave), ice cream, lifeguard towers, a towel in the sun to cool your heat, and a pier with a Ferris wheel you can ride.
+- **Harbor International**: the airport. Watch jets take off and land; inside the terminal, take a charter flight over the whole city or a weekend in Las Vistas.
+The Lowtown bus stop runs to the beach and the airport; cabs from the airport go back to the Starlite or downtown.
+
 ## Downtown
 
 Walk north up Sunset Blvd, ride the bus from the stop by the motel ($2), or take a cab ($12). Downtown has:

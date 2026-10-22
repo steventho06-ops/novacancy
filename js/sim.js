@@ -436,7 +436,7 @@
     if (G.agents.filter(a => a.kind === 'ped').length >= (G.lowGfx ? 5 : (G.map.peds || 10) + 1)) return;
     const seed = Math.floor(Math.random() * 160); // a pool of 160 different faces and outfits
     pedN++;
-    const WALKS = G.map.walks || WALKS0;
+    const WALKS = nearWalks(G.player);
     const start = pick(WALKS);
     let x = start[0], z = start[1];
     if (anywhere) { const b = pick(WALKS); const t = Math.random(); x = start[0] + (b[0] - start[0]) * t; z = start[1] + (b[1] - start[1]) * t; const n = G.nearestWalkable(x, z); if (n) { x = n[0]; z = n[1]; } }
@@ -451,8 +451,17 @@
     for (let dz = -5; dz <= 5; dz++) for (let dx = -5; dx <= 5; dx++) { const tx = Math.floor(x) + dx, tz = Math.floor(z) + dz; if (G.walkableTile(tx, tz) && pedFilter(tx, tz)) { const d = dx * dx + dz * dz; if (d < bd) { bd = d; best = [tx + 0.5, tz + 0.5]; } } }
     return best;
   }
+  // on a big map, people come and go around you (the whole city doesn't need simulating at once)
+  function nearWalks(e, r = 46) {
+    const all = G.map.walks || WALKS0;
+    if (!e || all.length < 30) return all;
+    const near = all.filter(w => Math.abs(w[0] - e.x) + Math.abs(w[1] - e.z) < r);
+    return near.length >= 3 ? near : all;
+  }
   function pedNext(a) {
-    const t = pick(G.map.walks || WALKS0);
+    const far = G.player && Math.hypot(a.x - G.player.x, a.z - G.player.z) > 60 && (G.map.walks || []).length >= 30 && G.player.x > -100;
+    if (far) { G.removeAgent(a); spawnPed(false); return; }
+    const t = pick(nearWalks(a, 40));
     if (!G.pathTo(a, t[0] + rnd(-0.3, 0.3), t[1])) { G.removeAgent(a); return; }
     a.onArrive = () => { if (Math.random() < 0.5) { G.removeAgent(a); spawnPed(false); } else pedNext(a); };
   }
