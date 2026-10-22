@@ -355,8 +355,8 @@ button:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
 .card.plan { display: flex; flex-direction: column; gap: 4px; }
 .card.plan b { font-weight: normal; font-size: 17px; color: var(--text); }
 .card.plan.on { outline: 2px solid var(--green); }
-.card.plan .pc { background: #141218; padding: 6px; display: flex; justify-content: center; }
-.plancanvas { image-rendering: pixelated; width: 100%; max-width: 190px; height: auto; }
+.card.plan .pc { background: #f3eee4; padding: 0; }
+.plancanvas { width: 100%; height: auto; display: block; }
 .planbtns { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
 .hseg { margin: 4px 0 6px; }
 .cath { margin: 10px 0 4px; font: 14px var(--px); color: var(--cyan); font-weight: normal; letter-spacing: 1px; }
@@ -366,3 +366,11 @@ button:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
 .decobar div { display: flex; gap: 6px; }
 .decobar small { color: var(--dim); font-size: 13px; width: 100%; text-align: center; }
 .decobar .ok { color: var(--green); } .decobar .no { color: var(--red); }
+
+/* ---------- phone map ---------- */
+.mapview { position: relative; height: min(52vh, 520px); min-height: 200px; background: #0c0a14; overflow: hidden; touch-action: none; }
+.mapview canvas { width: 100%; height: 100%; display: block; cursor: grab; touch-action: none; }
+.mapbtns { position: absolute; right: 6px; top: 6px; display: flex; flex-direction: column; gap: 4px; }
+.mapbtns button { min-width: 40px; min-height: 34px; padding: 4px 8px; background: rgba(20, 16, 32, 0.9); color: var(--text); font: 16px var(--px); border: 1px solid rgba(255, 255, 255, 0.15); }
+.mapwhere { position: absolute; left: 6px; bottom: 6px; padding: 3px 8px; background: rgba(20, 16, 32, 0.9); color: var(--cyan); font: 14px var(--px); pointer-events: none; }
+.maplegend { margin-top: 6px; }

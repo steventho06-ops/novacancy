@@ -24,7 +24,36 @@
     // ---------- city ----------
     lamp: { build: (mb, o) => { if (o.small) F.lamp(mb, o.x, o.y || 0, o.z, true); else C.streetLamp(mb, o.x, o.z, o.rot || 0); },
       light: o => { if (o.small) return { x: o.x, y: (o.y || 0) + 0.7, z: o.z, r: 3.2, c: WARM, i: 0.9 }; const s = Math.sin(o.rot || 0), c = Math.cos(o.rot || 0); return { x: o.x + s * 0.72, y: 2.7, z: o.z + c * 0.72, r: 10, c: [1, 0.8, 0.52], i: 1.5, night: true }; }, foot: o => o.small ? [] : post(0.12)(o) },
-    traffic: { build: (mb, o) => C.trafficLight(mb, o.x, o.z, o.rot, 'g'), foot: post(0.14) },
+    // a real door (or lift / stairs sign) on every way out of an interior, with a lit EXIT sign
+    exitdoor: { build: (mb, o) => {
+      const L = o.len, st = o.style || 'door', fr = o.frame || '#2a2a30';
+      mb.at(o.x, 0, o.z, o.ry);
+      if (st !== 'stairs') {
+        mb.box(-L / 2 - 0.06, 0, 0, 0.12, 2.35, 0.2, fr, { mat: W(MT.wood, 0.3) }); mb.box(L / 2 + 0.06, 0, 0, 0.12, 2.35, 0.2, fr, { mat: W(MT.wood, 0.3) });
+        mb.box(0, 2.2, 0, L + 0.24, 0.16, 0.2, fr, { mat: W(MT.wood, 0.3) });
+        if (st === 'lift') {
+          for (const sx of [-1, 1]) mb.box(sx * (L / 2 - 0.2), 0, 0.02, 0.36, 2.18, 0.06, '#b8bcc4', { mat: W(MT.metal, 0.1) });
+          mb.box(0, 0, -0.08, L, 2.18, 0.04, '#3a3a44');
+        } else {
+          const dbl = L >= 1.7, lw = dbl ? L / 2 - 0.06 : L - 0.1, col = o.col || '#5a3a2a';
+          const leaf = (hx, a, sgn) => { mb.at(hx, 0, 0.04, a); mb.box(sgn * lw / 2, 0.02, 0, lw, 2.12, 0.07, col, { mat: W(MT.wood, 0.25) }); mb.box(sgn * lw / 2, 1.1, 0.04, lw * 0.6, 0.7, 0.02, '#9fc8e0', { mat: W(MT.glass, 0.1), emit: 0.15 }); mb.box(sgn * lw * 0.8, 1.0, 0.05, 0.05, 0.05, 0.06, '#c9a14a'); mb.pop(); };
+          // doors in the back walls show their open leaves; on the open front edge the leaves would hide you, so only the frame shows
+          if (o.back) { leaf(-L / 2, -1.15, 1); if (dbl) leaf(L / 2, 1.15, -1); }
+          else mb.box(0, 0, 0, L, 0.03, 0.24, '#c9a14a', { mat: W(MT.metal, 0.2) });
+        }
+      }
+      // EXIT sign, readable from inside and outside
+      const sy = st === 'stairs' ? 2.6 : 2.42;
+      mb.box(0, sy, 0, 0.95, 0.36, 0.08, '#141a14');
+      text(mb, 'EXIT', 0, sy + 0.07, 0.05, 0.036, '#59ff8a', { emit: 1.8 });
+      mb.at(0, 0, 0, Math.PI); text(mb, 'EXIT', 0, sy + 0.07, 0.05, 0.036, '#59ff8a', { emit: 1.8 }); mb.pop();
+      // doormat and a glowing arrow on the floor pointing out
+      mb.box(0, 0, -0.55, Math.min(L - 0.2, 1.6), 0.02, 0.7, '#2a2228', { mat: W(MT.carpet, 0.4) });
+      for (const sg of [-1, 1]) { mb.at(sg * 0.13, 0.025, -1.25, sg * 0.785); mb.box(0, 0, 0, 0.07, 0.01, 0.42, '#59ff8a', { emit: 0.9, jit: 0 }); mb.pop(); }
+      mb.box(0, 0.025, -1.55, 0.07, 0.01, 0.5, '#59ff8a', { emit: 0.9, jit: 0 });
+      mb.pop();
+    }, light: o => ({ x: o.x - Math.sin(o.ry) * 0.6, y: 2.3, z: o.z - Math.cos(o.ry) * 0.6, r: 2.8, c: [0.4, 1, 0.55], i: 0.55 }) },
+    traffic: { build: (mb, o) => C.trafficLight(mb, o.x, o.z, o.rot, o.id && window.SIM && SIM.signal ? SIM.signal(o.axis || 'z') : 'g'), foot: post(0.14), dyn: true },
     hydrant: { build: (mb, o) => C.hydrant(mb, o.x, o.z), foot: post(0.2) },
     trashcan: { build: (mb, o) => C.trashCan(mb, o.x, o.z), foot: post(0.26) },
     trashbags: { build: (mb, o) => C.trashBags(mb, o.x, o.z, 3, o.x * 7 + o.z) },
@@ -248,6 +277,21 @@
     C.stripe(mb, 26, 45.9, 29, 45.9, P.laneW, 0.18); C.stripe(mb, 29, 52.1, 32, 52.1, P.laneW, 0.18);
   }
 
+  function exitDoors(map) {
+    const out = [];
+    for (const e of map.exits || []) {
+      const w = e.w || 1, h = e.h || 1;
+      let side;
+      if (e.x === 0 && (h > w || e.dir === 'left')) side = 'w';
+      else if (e.z === 0) side = 'n';
+      else if (e.x + w >= map.w && (h > w || e.dir === 'right')) side = 'e';
+      else side = 's';
+      const along = side === 'n' || side === 's';
+      const ry = { s: 0, n: Math.PI, w: -Math.PI / 2, e: Math.PI / 2 }[side];
+      out.push({ k: 'exitdoor', x: along ? e.x + w / 2 : side === 'w' ? 0 : map.w, z: along ? (side === 'n' ? 0 : map.h) : e.z + h / 2, ry, len: along ? w : h, back: side === 'n' || side === 'w', style: e.style || (e.to === 'city' && map.underground ? 'stairs' : null) || ((map.objects || []).some(o => o.k === 'metrostairs') ? 'stairs' : 'door'), col: map.walls && map.walls.doorCol });
+    }
+    return out;
+  }
   // ---------------- build a whole map ----------------
   // ctx: { S, tier, night, vacancy, room }
   function buildMap(map, ctx) {
@@ -267,11 +311,12 @@
       if (map.outer) map.outer(g, C, P); else outerGround(g, map);
       statics.push({ mb: g, whole: true });
       const sky = new MB(); if (map.skyline) map.skyline(sky, C, P); else skyline(sky, map);
-      occ.push({ mb: sky, box: [-12, 0, -12, map.w + 6, 30, map.h], id: 'skyline', noFade: true });
+      occ.push({ mb: sky, box: [-16, 0, (map.z0 || 0) - 16, map.w + 6, 40, (map.z0 || 0) + map.h], id: 'skyline', noFade: true });
       // district buildings
       for (const b of map.buildings || []) {
         const mb = new MB();
-        const H = b.tower ? DT.tower(mb, Object.assign({ seed: b.x * 31 + b.z * 17 }, b)) : C.building(mb, null, Object.assign({ seed: b.x * 31 + b.z * 17 }, b));
+        const H = b.custom && window.FACADE && FACADE[b.custom] ? FACADE[b.custom](mb, b) : b.tower ? DT.tower(mb, Object.assign({ seed: b.x * 31 + b.z * 17 }, b)) : C.building(mb, null, Object.assign({ seed: b.x * 31 + b.z * 17 }, b));
+        if (b.custom && FACADE[b.custom + 'Lights']) lights.push(...FACADE[b.custom + 'Lights'](b));
         occ.push({ mb, box: [b.x - 0.5, 0, b.z - 0.5, b.x + b.w + 1.2, H + 3, b.z + b.d + 1.2], id: b.id });
         if (b.shop) {
           const front = b.face === 'e' ? { x: b.x + b.w + 1.2, z: b.z + b.d / 2 } : { x: b.x + b.w / 2, z: b.z + b.d + 1.2 };
@@ -284,11 +329,12 @@
       lights.push(...interiorLights(map));
     }
     for (const t of map.t.map((v, i) => [v, i])) {
-      const [v, i] = t; const x = i % map.w, z = Math.floor(i / map.w);
+      const [v, i] = t; const x = i % map.w, z = Math.floor(i / map.w) + (map.z0 || 0);
       if (v === 'bldg' || v === 'water' || v === 'void') solid.add(x + ',' + z);
     }
-    // objects
-    for (const o of map.objects || []) {
+    // objects (interiors also get a door on every exit)
+    const objs = map.outdoor ? (map.objects || []) : [...(map.objects || []), ...exitDoors(map)];
+    for (const o of objs) {
       const k = K[o.k];
       if (!k) { console.warn('unknown kind', o.k); continue; }
       const isDyn = o.id != null || k.dyn;
@@ -320,7 +366,7 @@
   // ---------------- hitboxes from geometry ----------------
   // Everything at body height (between ankle and head) blocks. Each triangle is rasterised onto
   // a fine grid seen from above; vertical faces count as their edge. Cells merge into rectangles.
-  const AUTO_SKIP = new Set(['motel', 'moteloffice', 'roomdoor', 'officedoor', 'npcspot', 'pool', 'mess', 'hole', 'wiring', 'bedroll', 'rug', 'oilstain', 'manhole', 'parking', 'court', 'tracks', 'metrostairs', 'billboard', 'tube', 'neonstrip', 'ceilfan', 'chandelier', 'window', 'ac', 'nets', 'skyline', 'skyview', 'ledlight']);
+  const AUTO_SKIP = new Set(['motel', 'moteloffice', 'roomdoor', 'officedoor', 'npcspot', 'pool', 'mess', 'hole', 'wiring', 'bedroll', 'rug', 'oilstain', 'manhole', 'parking', 'court', 'tracks', 'metrostairs', 'billboard', 'tube', 'neonstrip', 'ceilfan', 'chandelier', 'window', 'ac', 'nets', 'skyline', 'skyview', 'ledlight', 'exitdoor']);
   const CELL = 0.2, Y0 = 0.24, Y1 = 1.7;
   function autoFoot(a, s, e) {
     if (e <= s) return;
@@ -385,7 +431,7 @@
     });
     const fp = { block, walk, rects, grid, stand: new Map(), solid: new Set() };
     const tryPts = [[0.5, 0.5], [0.3, 0.5], [0.7, 0.5], [0.5, 0.3], [0.5, 0.7], [0.3, 0.3], [0.7, 0.3], [0.3, 0.7], [0.7, 0.7]];
-    for (let z = 0; z < map.h; z++) for (let x = 0; x < map.w; x++) {
+    for (let z = map.z0 || 0; z < (map.z0 || 0) + map.h; z++) for (let x = 0; x < map.w; x++) {
       const key = x + ',' + z;
       if (walk.has(key)) continue;
       if (block.has(key)) { fp.solid.add(key); continue; }

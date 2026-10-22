@@ -116,6 +116,7 @@
     for (const d of [...sc.statics, ...sc.occ, ...sc.dyn]) G.R.free(d.mesh);
   }
   function loadMap(id, tx, tz, dir) {
+    if (id === 'downtown') { id = 'city'; if (tz != null) tz -= 60; } // Downtown is part of the city map now
     // leaving the street: the city keeps living while you're inside (see stepWorld)
     // leaving a street map: it keeps living while you're elsewhere (see stepWorld)
     G.worlds = G.worlds || {};
@@ -221,6 +222,8 @@
     } else if (!fp.rects) {
       for (const [dx, dz] of [[-r, -r], [r, -r], [-r, r], [r, r]]) if (!walkableTile(Math.floor(x + dx), Math.floor(z + dz))) return false;
     }
+    // cars are solid: you can't walk into one (but you can always step out if one stopped on you)
+    if (self && !self.ghost && G.cars.length && SIM.carRect) for (const c of G.cars) { if (Math.abs(c.x - x) > 2 || Math.abs(c.z - z) > 2) continue; const q = SIM.carRect(c); if (BUILD.circRect(x, z, r, q) && !BUILD.circRect(self.x, self.z, r * 0.8, q)) return false; }
     if (self === G.player && !ignoreAgents) for (const a of G.agents) if (!a.ghost && !a.hidden && Math.hypot(a.x - x, a.z - z) < 0.42 && Math.hypot(a.x - x, a.z - z) < Math.hypot(a.x - self.x, a.z - self.z)) return false;
     return true;
   }
@@ -677,7 +680,7 @@
     let tx = p.x, ty = (p.y || 0) + 0.6, tz = p.z;
     if (G.camOverride) { const o = G.camOverride; tx = o.x; ty = o.y != null ? o.y : 0.5; tz = o.z; }
     else if (!m.indoor) {
-      tx = clamp(tx, 2, m.w - 2); tz = clamp(tz, 2, m.h - 2);
+      tx = clamp(tx, 2, m.w - 2); tz = clamp(tz, (m.z0 || 0) + 2, (m.z0 || 0) + m.h - 2);
     } else { tx = lerp(tx, m.w / 2, 0.35); tz = lerp(tz, m.h / 2, 0.35); }
     const c = G.camState || (G.camState = { x: tx, y: ty, z: tz });
     const k = G.camSnap ? 1 : 1 - Math.exp(-dt * (G.camOverride ? 2.5 : 6));
@@ -869,6 +872,7 @@
       else if (d[k] && typeof d[k] === 'object' && !Array.isArray(d[k]) && typeof s[k] === 'object') for (const j in d[k]) if (s[k][j] === undefined) s[k][j] = d[k][j];
     }
     if (!Array.isArray(s.rooms)) s.rooms = [];
+    if (s.map === 'downtown') { s.map = 'city'; if (typeof s.z === 'number') s.z -= 60; } // one city map now
     return s;
   }
   function loadSave() {

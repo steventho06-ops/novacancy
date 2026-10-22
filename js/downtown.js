@@ -193,7 +193,7 @@
     O.push({ k: 'trashcan', x: 10.4, z: 37 }, { k: 'trashcan', x: 13.6, z: 53 });
     // south-east block
     O.push({ k: 'metrodt', id: 'metrodt', x: 39, z: 49 });
-    O.push({ k: 'taxistand', id: 'taxidt', x: 33.4, z: 40 }, { k: 'parked', x: 34.6, z: 37.2, rot: Math.PI, kind: 'taxi', col: '#e8c13c' });
+    O.push({ k: 'taxistand', id: 'taxidt', x: 33.4, z: 40 }, { k: 'parked', x: 33.2, z: 37.2, rot: Math.PI, kind: 'taxi', col: '#e8c13c' });
     O.push({ k: 'atm', id: 'atm2', x: 46.2, z: 42.6, rot: 0 }, { k: 'bench', x: 36, z: 43.4, rot: Math.PI }, { k: 'planterbox', x: 44, z: 47, w: 2, d: 1 }, { k: 'tree', x: 46.5, z: 56 });
     O.push({ k: 'vending', x: 33.4, z: 46, rot: -Math.PI / 2, col: '#c8443c', glow: '#ffe8a0' }, { k: 'hydrant', x: 33.3, z: 52 }, { k: 'hydrant', x: 24.7, z: 16 });
     O.push({ k: 'phonebooth', x: 24.7, z: 36.5, rot: Math.PI / 2 }, { k: 'busstop', id: 'busstopdt', x: 24.9, z: 12, rot: Math.PI / 2 });

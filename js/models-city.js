@@ -23,7 +23,8 @@
   };
   function ground(map, mb, wearMul = 1) {
     const H = (i, j) => { const t = map.tile(i, j); return t && GROUND[t] ? GROUND[t].y : 0.14; };
-    for (let j = 0; j < map.h; j++) for (let i = 0; i < map.w; i++) {
+    const z0 = map.z0 || 0;
+    for (let j = z0; j < z0 + map.h; j++) for (let i = 0; i < map.w; i++) {
       const t = map.tile(i, j); const g = GROUND[t] || GROUND.walk;
       if (t === 'void' || t === 'bldg') continue;
       const y = g.y, wear = Math.min(0.99, g.w * wearMul * (0.8 + 0.4 * R(i, j, 5)));
@@ -53,7 +54,10 @@
       const e = Math.min(len, s + dash);
       const ax = x0 + dx * s, az = z0 + dz * s, bx = x0 + dx * e, bz = z0 + dz * e;
       const px = -dz * w / 2, pz = dx * w / 2;
-      mb.quad([ax - px, 0.012, az - pz], [bx - px, 0.012, bz - pz], [bx + px, 0.012, bz + pz], [ax + px, 0.012, az + pz], col, { mat: W(MT.concrete, 0.7), jit: 0 });
+      // thin boxes, so the paint shows whichever way the line runs
+      if (Math.abs(dx) < 1e-6) mb.box(ax, 0, (az + bz) / 2, w, 0.013, Math.abs(bz - az), col, { mat: W(MT.concrete, 0.7), jit: 0 });
+      else if (Math.abs(dz) < 1e-6) mb.box((ax + bx) / 2, 0, az, Math.abs(bx - ax), 0.013, w, col, { mat: W(MT.concrete, 0.7), jit: 0 });
+      else { mb.quad([ax - px, 0.012, az - pz], [bx - px, 0.012, bz - pz], [bx + px, 0.012, bz + pz], [ax + px, 0.012, az + pz], col, { mat: W(MT.concrete, 0.7), jit: 0 }); mb.quad([ax + px, 0.012, az + pz], [bx + px, 0.012, bz + pz], [bx - px, 0.012, bz - pz], [ax - px, 0.012, az - pz], col, { mat: W(MT.concrete, 0.7), jit: 0 }); }
     }
   }
   function stripe(mb, x0, z0, x1, z1, col = P.laneW, w = 0.1, y = 0.012) { laneDash(mb, x0, z0, x1, z1, col, w, 1e4, 0); }

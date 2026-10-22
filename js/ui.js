@@ -54,7 +54,8 @@
   const itemIcon = it => { const d = I[it]; return d ? iconSVG(d.icon[0], d.icon[1]) : iconSVG('box', '#888'); };
 
   // ---------------- HUD ----------------
-  const PLACES = { city: 'Lowtown', office: 'Starlite Office', lobby: 'Starlite Lobby', room: 'Room', pawn: 'Lucky Pawn', mart: '24/7 Mart', diner: "Dina's Diner", metro: 'The Underline', precinct: '9th Precinct', laundry: 'Suds & Duds', bar: 'The Blue Note', warehouse: 'Warehouse 9', trailer: 'Vance Holdings' };
+  const PLACES = { city: 'Lowtown', office: 'Starlite Office', lobby: 'Starlite Lobby', room: 'Room', pawn: 'Lucky Pawn', mart: '24/7 Mart', diner: "Dina's Diner", metro: 'The Underline', precinct: '9th Precinct', laundry: 'Suds & Duds', bar: 'The Blue Note', warehouse: 'Warehouse 9', trailer: 'Vance Holdings', aurora: 'Aurora Tower', penthouse: 'Aurora Residences', bank: 'First Harbor Bank', casino: 'Lucky 7 Casino', cafe: 'Daily Grind', boutique: 'Silk & Steel', college: 'Community College', vancegrand: 'The Vance Grand', cityhall: 'City Hall' };
+  UI.placeName = id => PLACES[id] || id;
   UI.onMap = function (id) {
     if (st.title) return;
     if (id !== 'room' && id !== 'city') UI.banner(PLACES[id] || id, ''); else if (id === 'city' && !st.cityShown) { st.cityShown = true; UI.banner('Lowtown', 'Sunset Boulevard'); }

@@ -335,8 +335,8 @@
     for (let i = 0; i < n; i++) {
       const LANES = G.map.lanes || LANES0;
       const L = LANES[i % LANES.length];
-      const t = Math.random();
-      const pos = L.from + (L.to - L.from) * t;
+      let pos = 0;
+      for (let k = 0; k < 12; k++) { pos = L.from + (L.to - L.from) * Math.random(); if (!G.cars.some(c => c.lane === L && Math.abs(c.pos - pos) < 6) && !(G.map.junctions || []).some(j => L.axis === 'z' ? pos > j.z0 - 2 && pos < j.z1 + 2 : pos > j.x0 - 2 && pos < j.x1 + 2)) break; }
       addCar(L, pos);
     }
   }
@@ -353,21 +353,58 @@
     if (L.axis === 'z') { c.x = L.x; c.z = c.pos; c.yaw = L.dir > 0 ? 0 : Math.PI; }
     else { c.z = L.z; c.x = c.pos; c.yaw = L.dir > 0 ? Math.PI / 2 : -Math.PI / 2; }
   }
+  // car bodies as rectangles [x, z, w, d] (cars only ever drive along the two axes)
+  const CAR_HL = 1.15, CAR_HW = 0.55;
+  function carRect(c) { const hl = c.kind === 'van' ? 1.25 : CAR_HL; return c.lane.axis === 'z' ? [c.x - CAR_HW, c.z - hl, CAR_HW * 2, hl * 2] : [c.x - hl, c.z - CAR_HW, hl * 2, CAR_HW * 2]; }
+  SIM.carRect = carRect;
+  // traffic signals: Sunset/Grand (z axis) and the cross streets (x axis) take turns
+  const CYC = 24;
+  function signal(axis, t) {
+    const k = ((t != null ? t : G.t) % CYC + CYC) % CYC;
+    if (axis === 'z') return k < 9 ? 'g' : k < 11.5 ? 'y' : 'r';
+    return k >= 12 && k < 21 ? 'g' : k >= 21 && k < 23.5 ? 'y' : 'r';
+  }
+  SIM.signal = signal;
   function stepTraffic(dt) {
-    const p = G.player;
+    const p = G.player, J = G.map.junctions || [];
     for (const c of G.cars) {
-      const L = c.lane;
-      // brake for anything ahead in the lane
-      let block = 99;
-      const ahead = (x, z) => { const along = L.axis === 'z' ? (z - c.pos) * L.dir : (x - c.pos) * L.dir; const side = L.axis === 'z' ? Math.abs(x - L.x) : Math.abs(z - L.z); if (along > 0 && side < 1.0) block = Math.min(block, along); };
-      ahead(p.x, p.z);
-      for (const a of G.agents) if (!a.hidden) ahead(a.x, a.z);
-      for (const o of G.cars) if (o !== c && o.lane === L) ahead(o.x, o.z);
-      const target = block < 2.6 ? 0 : block < 5 ? c.speed * 0.4 : c.speed;
-      c.v = G.lerp(c.v, target, 1 - Math.exp(-dt * (target < c.v ? 6 : 1.5)));
-      if (block < 2.6 && block > 0.5 && Math.hypot(p.x - c.x, p.z - c.z) < 3 && !c.honked) { c.honked = true; SFX.play('horn'); setTimeout(() => { c.honked = false; }, 4000); }
-      c.pos += c.v * L.dir * dt;
-      if ((L.dir > 0 && c.pos > L.to) || (L.dir < 0 && c.pos < L.to)) { c.pos = L.from; c.col = pick(CAR_COLS); }
+      const L = c.lane, d = L.dir, hl = c.kind === 'van' ? 1.25 : CAR_HL;
+      // how far the front bumper can roll before touching something in our lane (or crossing it)
+      let block = 99, byCar = false;
+      const lat0 = (L.axis === 'z' ? L.x : L.z) - CAR_HW - 0.05, lat1 = lat0 + CAR_HW * 2 + 0.1;
+      const test = (q, isCar) => {
+        const l0 = L.axis === 'z' ? q[0] : q[1], l1 = l0 + (L.axis === 'z' ? q[2] : q[3]);
+        if (l1 < lat0 || l0 > lat1) return;
+        const b0 = L.axis === 'z' ? q[1] : q[0], b1 = b0 + (L.axis === 'z' ? q[3] : q[2]);
+        const a0 = Math.min((b0 - c.pos) * d, (b1 - c.pos) * d), a1 = Math.max((b0 - c.pos) * d, (b1 - c.pos) * d);
+        if (a1 < -hl + 0.2) return;                    // behind us
+        const gap = Math.max(0, a0 - hl);
+        if (gap < block) { block = gap; byCar = isCar; }
+      };
+      if (!p.hidden) test([p.x - 0.3, p.z - 0.3, 0.6, 0.6], false);
+      for (const a of G.agents) if (!a.hidden) test([a.x - 0.3, a.z - 0.3, 0.6, 0.6], false);
+      if (!(c.ghostT > 0)) for (const o of G.cars) if (o !== c) test(carRect(o), true);
+      // red or amber light ahead: stop at the line (amber only if we can still stop)
+      const st = signal(L.axis);
+      if (st !== 'g') for (const j of J) {
+        const lo = L.axis === 'z' ? j.x0 : j.z0, hi = L.axis === 'z' ? j.x1 : j.z1, lane = L.axis === 'z' ? L.x : L.z;
+        if (lane < lo || lane > hi) continue;
+        const entry = L.axis === 'z' ? (d > 0 ? j.z0 : j.z1) : (d > 0 ? j.x0 : j.x1);
+        const gap = (entry - c.pos) * d - hl - 0.4;
+        if (gap < -0.3 || gap > 9) continue;
+        if (st === 'y' && gap < 1.5 && c.v > 2) continue; // too close to stop: go through
+        if (gap < block) { block = Math.max(0, gap); byCar = false; }
+      }
+      const target = block < 0.35 ? 0 : block < 3.5 ? Math.min(c.speed, block * 1.4) : c.speed;
+      c.v = G.lerp(c.v, target, 1 - Math.exp(-dt * (target < c.v ? 8 : 1.5)));
+      if (block < 0.35) c.v = 0;
+      // two cars nose to nose in a junction: after a while the one that's stuck edges through
+      c.stuck = c.v < 0.05 && byCar ? (c.stuck || 0) + dt : 0;
+      if (c.stuck > 7) { c.ghostT = 2.5; c.stuck = 0; }
+      if (c.ghostT > 0) c.ghostT -= dt;
+      if (block < 3 && block > 0.05 && !byCar && Math.hypot(p.x - c.x, p.z - c.z) < 3.5 && !c.honked && c.v < 0.5) { c.honked = true; SFX.play('horn'); setTimeout(() => { c.honked = false; }, 5000); }
+      c.pos += c.v * d * dt;
+      if ((d > 0 && c.pos > L.to) || (d < 0 && c.pos < L.to)) { c.pos = L.from; c.col = pick(CAR_COLS); c.v = c.speed * 0.6; }
       placeCar(c);
       if (c.kind === 'police') c.siren = S().heat >= 3 || !!S().flags.chase;
     }

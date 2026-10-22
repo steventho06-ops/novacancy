@@ -35,11 +35,18 @@
     busstop: { pt: [24.0, 41.6], name: 'the bus stop' },
     docks: { pt: [49.6, 58.5], name: 'the docks' },
     hoop: { pt: [7.5, 66.5], name: 'the basketball court' },
+    // downtown, down Sunset where it turns into Grand Ave (longer runs, better pay)
+    cafe: { exit: 'cafeIn', name: 'the Daily Grind' },
+    casino: { exit: 'casinoIn', name: 'the Lucky 7' },
+    boutique: { exit: 'boutiqueIn', name: 'Silk & Steel' },
+    aurora: { exit: 'auroraIn', name: 'Aurora Tower' },
+    cityhall: { exit: 'cityhallIn', name: 'City Hall' },
+    park: { pt: [12, -60 + 41], name: 'Central Park' },
   };
   const point = k => { const s = SPOTS[k]; if (s.pt) return s.pt; const r = G.returnPoint(s.exit); return [r[0], r[1]]; };
   const CLIENTS = {
-    legit: [['Raj', 'mart', 'Invoices for my cousin. Do not lose them.'], ['Dina', 'diner', 'Pies for a birthday. Keep them level.'], ['Gus', 'pawn', 'A watch that\'s actually legal. Rare, I know.'], ['Mrs. Chen', 'laundry', 'Clean shirts for my son. He never picks them up.'], ['Mo', 'bar', 'Sheet music. Don\'t get it wet.'], ['Lou', 'busstop', 'A care package for the road.']],
-    shady: [['Sable', 'metro', 'You don\'t open it. You don\'t ask. You get paid.'], ['Kofi', 'docks', 'Small box, big favor.']],
+    legit: [['Raj', 'mart', 'Invoices for my cousin. Do not lose them.'], ['Dina', 'diner', 'Pies for a birthday. Keep them level.'], ['Gus', 'pawn', 'A watch that\'s actually legal. Rare, I know.'], ['Mrs. Chen', 'laundry', 'Clean shirts for my son. He never picks them up.'], ['Mo', 'bar', 'Sheet music. Don\'t get it wet.'], ['Lou', 'busstop', 'A care package for the road.'], ['Kiki', 'cafe', 'Coffee beans. The good ones.'], ['Vero', 'boutique', 'A dress for a client. Do not wrinkle it.'], ['A clerk', 'cityhall', 'Permits. Very boring, very urgent.'], ['A doorman', 'aurora', 'Dry cleaning for the 30th floor.'], ['Sal', 'park', 'Buns. I ran out of buns.']],
+    shady: [['Sable', 'metro', 'You don\'t open it. You don\'t ask. You get paid.'], ['Kofi', 'docks', 'Small box, big favor.'], ['A croupier', 'casino', 'Chips. Don\'t count them.']],
   };
   function makeOffer() {
     const h = hour(), late = h >= 23 || h < 7;
@@ -377,7 +384,7 @@
     const m = Math.floor(absMin());
     if (m !== lastMin) { lastMin = m; stepBuyers(); stepBus(); if (G.mapId === 'city') stepCamp(); if (m % 60 === 0) stepWeather(); }
   };
-  window.EXTRAS = { makeBuyer, stepBuyers, refreshOffers, acceptGig };
+  window.EXTRAS = { makeBuyer, stepBuyers, refreshOffers, acceptGig, gigPoint: point };
   const tick0 = UI.tick;
   UI.tick = function () { tick0.apply(this, arguments); try { tickHud(); } catch (e) { } };
 })();

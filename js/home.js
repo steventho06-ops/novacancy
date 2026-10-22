@@ -153,7 +153,7 @@
     O.push(...fixtures(planId));
     for (const it of hm.plan === planId ? hm.items : []) O.push({ k: 'furn', fid: it.id, id: 'f_' + it.uid, x: it.x, z: it.z, rot: it.rot || 0, walkThrough: FURN[it.id] && FURN[it.id].walk });
     // the door by the elevator, bottom right
-    m.exits = [{ x: p.w - 3, z: p.h - 1, w: 2, h: 1, to: 'aurora', tx: 8.5, tz: 1.8, dir: 'down' }];
+    m.exits = [{ x: p.w - 3, z: p.h - 1, w: 2, h: 1, to: 'aurora', tx: 8.5, tz: 1.8, dir: 'down', style: 'lift' }];
     m.spawn = { x: p.w - 2, z: p.h - 1.6, dir: 'up' };
     return m;
   };
@@ -240,13 +240,60 @@
   // =====================================================================
   // renting and buying: the brochure
   // =====================================================================
+  // an architect's plan: paper, charcoal walls, blue glass, fixtures drawn as plan symbols, rooms labelled
   function planCanvas(id) {
-    const p = PLANS[id], c = document.createElement('canvas'); c.width = p.w * 6; c.height = p.h * 6; c.className = 'plancanvas';
-    const x = c.getContext('2d'); x.fillStyle = '#3a3634'; x.fillRect(0, 0, c.width, c.height);
-    if (p.terrace) { x.fillStyle = '#c8c0b4'; x.fillRect(0, 0, c.width, p.terrace * 6); x.fillStyle = '#2fb8e8'; x.fillRect(6, 3, 54, 15); }
-    x.fillStyle = '#a8dcff'; x.fillRect(0, (p.terrace || 0) * 6, c.width, 2); if (p.glass.includes('w')) x.fillRect(0, (p.terrace || 0) * 6, 2, c.height);
-    for (const f of fixtures(id)) { if (f.k === 'ledlight') continue; x.fillStyle = f.k === 'bathpod' ? '#e8e6e0' : f.k === 'kitchen' ? '#c8ccd4' : f.k === 'island' ? '#f2f0ec' : f.k === 'infinity' ? '#2fb8e8' : '#8a7a6a'; const w = f.k === 'bathpod' ? 3 : f.k === 'kitchen' ? 0.7 : f.k === 'island' ? (f.w || 2.4) : f.k === 'infinity' ? f.w : 1, d = f.k === 'bathpod' ? 3 : f.k === 'kitchen' ? (f.len || 4) : f.k === 'island' ? 1 : f.k === 'infinity' ? f.d : 0.6; x.fillRect((f.x - w / 2) * 6, (f.z - d / 2) * 6, w * 6, d * 6); }
-    x.fillStyle = '#ffd84a'; x.fillRect((p.w - 3) * 6, (p.h - 1) * 6 + 3, 12, 3);
+    const p = PLANS[id], S2 = 16, pad = 22, T = p.terrace || 0;
+    const c = document.createElement('canvas'); c.width = p.w * S2 + pad * 2; c.height = p.h * S2 + pad * 2 + 6; c.className = 'plancanvas';
+    const x = c.getContext('2d'), X = v => pad + v * S2, Y = v => pad + v * S2;
+    const ink = '#2a2a33', glass = '#3a8ac8', paper = '#f3eee4';
+    x.fillStyle = paper; x.fillRect(0, 0, c.width, c.height);
+    // floor: pale oak boards inside, stone on the terrace
+    x.fillStyle = '#e6dccb'; x.fillRect(X(0), Y(T), p.w * S2, (p.h - T) * S2);
+    x.strokeStyle = 'rgba(120,96,70,0.12)'; x.lineWidth = 1;
+    for (let k = Y(T) + 4; k < Y(p.h); k += 4) { x.beginPath(); x.moveTo(X(0), k + 0.5); x.lineTo(X(p.w), k + 0.5); x.stroke(); }
+    if (T) {
+      x.fillStyle = '#d9d4cc'; x.fillRect(X(0), Y(0), p.w * S2, T * S2);
+      x.strokeStyle = 'rgba(0,0,0,0.08)'; for (let k = 0; k < p.w; k++) for (let j = 0; j < T; j++) x.strokeRect(X(k) + 0.5, Y(j) + 0.5, S2 - 1, S2 - 1);
+    }
+    const rect = (a, b, w, h, fill, stroke, lw = 1.5) => { if (fill) { x.fillStyle = fill; x.fillRect(X(a), Y(b), w * S2, h * S2); } if (stroke) { x.strokeStyle = stroke; x.lineWidth = lw; x.strokeRect(X(a) + 0.5, Y(b) + 0.5, w * S2 - 1, h * S2 - 1); } };
+    const circ = (a, b, r, fill, stroke) => { x.beginPath(); x.arc(X(a), Y(b), r * S2, 0, Math.PI * 2); if (fill) { x.fillStyle = fill; x.fill(); } if (stroke) { x.strokeStyle = stroke; x.lineWidth = 1.2; x.stroke(); } };
+    const label = (t, a, b, size = 10, col = '#6a6458') => { x.font = `${size}px Lowtown, ui-monospace, monospace`; const w = x.measureText(t).width; x.fillStyle = col; x.fillText(t, X(a) - w / 2, Y(b) + size / 3); };
+    // fixtures
+    for (const f of fixtures(id)) {
+      if (f.k === 'kitchen') { const L = f.len || 4; rect(f.x - 0.35, f.z - L / 2, 0.7, L, '#fbfaf7', ink); for (let k = 0; k < 4; k++) circ(f.x, f.z - L / 2 + 0.5 + (k % 2) * 0.45 + Math.floor(k / 2) * 0.0, 0.12, null, ink); rect(f.x - 0.3, f.z + 0.1, 0.6, 0.6, '#dfe9f0', ink, 1); rect(f.x - 0.4, f.z + L / 2 - 0.8, 0.8, 0.75, '#e9eaec', ink); label('KITCHEN', f.x - 1.3, f.z + L / 2 + 0.4, 9); }
+      else if (f.k === 'island') { const w = f.w || 2.4; rect(f.x - w / 2, f.z - 0.5, w, 1, '#ffffff', ink); for (let k = 0; k < 3; k++) circ(f.x - 0.7 + k * 0.7, f.z + 0.85, 0.18, '#fbfaf7', ink); }
+      else if (f.k === 'bathpod') {
+        const w = f.w || 3, d = f.d || 3, bx = f.x - w / 2, bz = f.z - d / 2;
+        rect(bx, bz, w, d, '#eef2f4', null);
+        x.strokeStyle = ink; x.lineWidth = 3; x.beginPath(); x.moveTo(X(bx), Y(bz)); x.lineTo(X(bx + w), Y(bz)); x.moveTo(X(bx), Y(bz)); x.lineTo(X(bx), Y(bz + d)); x.stroke();
+        x.strokeStyle = glass; x.lineWidth = 2; x.beginPath(); x.moveTo(X(bx + 0.4), Y(bz + d)); x.lineTo(X(bx + w - 0.4), Y(bz + d)); x.stroke();
+        x.beginPath(); x.lineWidth = 1.5; x.strokeStyle = ink; x.fillStyle = '#ffffff'; const tx = X(f.x - 1.25), tz = Y(f.z - 1.2), tw = 1.3 * S2, th = 1.6 * S2; x.moveTo(tx + 6, tz); x.arcTo(tx + tw, tz, tx + tw, tz + th, 6); x.arcTo(tx + tw, tz + th, tx, tz + th, 6); x.arcTo(tx, tz + th, tx, tz, 6); x.arcTo(tx, tz, tx + tw, tz, 6); x.fill(); x.stroke();
+        circ(f.x + 0.8, f.z - 0.9, 0.22, '#ffffff', ink); rect(f.x + 0.55, f.z - 1.4, 0.5, 0.2, '#ffffff', ink, 1);
+        label('BATH', f.x + 0.3, f.z + 0.6, 9);
+      }
+      else if (f.k === 'infinity') { rect(f.x - f.w / 2, f.z - f.d / 2, f.w, f.d, '#7ec8e8', '#2f7aa8'); x.strokeStyle = 'rgba(255,255,255,0.6)'; x.lineWidth = 1; for (let k = 0; k < 3; k++) { x.beginPath(); for (let u = 0; u <= f.w * S2; u += 4) x.lineTo(X(f.x - f.w / 2) + u, Y(f.z - f.d / 2 + 0.6 + k * 0.6) + Math.sin(u / 6) * 1.5); x.stroke(); } label('INFINITY POOL', f.x, f.z, 9, '#ffffff'); }
+      else if (f.k === 'furn' && f.fid === 'wardrobe') { rect(f.x - 0.9, f.z - 0.3, 1.8, 0.6, '#f7f3ec', ink); x.strokeStyle = ink; x.beginPath(); x.moveTo(X(f.x - 0.8), Y(f.z)); x.lineTo(X(f.x + 0.8), Y(f.z)); x.stroke(); label('CLOSET', f.x, f.z - 0.75, 8); }
+      else if (f.k === 'furn' && f.fid === 'safe2') { rect(f.x - 0.3, f.z - 0.3, 0.6, 0.6, '#c8ccd4', ink); label('S', f.x, f.z, 8, ink); }
+      else if (f.k === 'furn' && f.fid === 'lounge') { rect(f.x - 0.45, f.z - 0.7, 0.9, 1.4, '#f7f3ec', ink, 1); }
+      else if (f.k === 'furn' && f.fid === 'olive') { circ(f.x, f.z, 0.45, '#9ab88a', '#6a8a5a'); }
+    }
+    // walls: charcoal on the solid sides, double blue line where it's glass, mullion ticks
+    x.strokeStyle = ink; x.lineWidth = 5;
+    x.beginPath(); x.moveTo(X(p.w), Y(T)); x.lineTo(X(p.w), Y(p.h)); x.lineTo(X(0), Y(p.h)); if (!p.glass.includes('w')) x.lineTo(X(0), Y(T)); x.stroke();
+    const glassLine = (ax, az, bx, bz, gap) => { x.strokeStyle = glass; x.lineWidth = 1.5; for (const o of [-2, 2]) { x.beginPath(); if (az === bz) { if (gap) { x.moveTo(X(ax), Y(az) + o); x.lineTo(X(gap[0]), Y(az) + o); x.moveTo(X(gap[1]), Y(az) + o); x.lineTo(X(bx), Y(bz) + o); } else { x.moveTo(X(ax), Y(az) + o); x.lineTo(X(bx), Y(bz) + o); } } else { x.moveTo(X(ax) + o, Y(az)); x.lineTo(X(bx) + o, Y(bz)); } x.stroke(); } x.fillStyle = ink; const L = Math.hypot(bx - ax, bz - az); for (let k = 0; k <= L; k += 1.6) { const u = ax + (bx - ax) * k / L, v = az + (bz - az) * k / L; if (gap && az === bz && u > gap[0] && u < gap[1]) continue; x.fillRect(X(u) - 2, Y(v) - 2, 4, 4); } };
+    glassLine(0, T, p.w, T, T ? [10.6, 12.9] : null);
+    if (p.glass.includes('w')) glassLine(0, T, 0, p.h);
+    if (T) { glassLine(0, 0, p.w, 0); x.strokeStyle = ink; x.lineWidth = 2; x.beginPath(); x.moveTo(X(0), Y(0)); x.lineTo(X(0), Y(T)); x.moveTo(X(p.w), Y(0)); x.lineTo(X(p.w), Y(T)); x.stroke();
+      x.strokeStyle = ink; x.lineWidth = 1; x.beginPath(); x.arc(X(10.6), Y(T), 2.3 * S2 / 2, -Math.PI / 2, 0); x.stroke(); label('TERRACE', 15.5, 2.6, 10); }
+    // entry: elevator and the door swing
+    const ex = p.w - 3; x.fillStyle = paper; x.fillRect(X(ex), Y(p.h) - 3, 2 * S2, 6);
+    x.strokeStyle = ink; x.lineWidth = 1; x.beginPath(); x.moveTo(X(ex), Y(p.h)); x.arc(X(ex), Y(p.h), 2 * S2 * 0.5, -Math.PI / 2, 0); x.stroke();
+    rect(ex + 0.2, p.h + 0.15, 1.6, 0.9, '#d8d4cc', ink, 1); label('LIFT', ex + 1, p.h + 0.62, 8, ink);
+    label('LIVING', p.w * 0.42, T + (p.h - T) * 0.45, 12, '#4a443a');
+    // scale bar + north arrow
+    x.fillStyle = ink; x.font = '10px Lowtown, ui-monospace, monospace';
+    x.fillText(`${p.w} × ${p.h} m · ${p.w * p.h} m²`, pad, 14);
+    x.beginPath(); x.moveTo(c.width - 14, 5); x.lineTo(c.width - 9, 15); x.lineTo(c.width - 19, 15); x.closePath(); x.fill(); x.fillText('N', c.width - 17, 26);
     return c;
   }
   function brochure() {

@@ -146,7 +146,7 @@ void main(){
     if (vE * uGlassGlow < 0.05) {
       // broken panes: shards radiating from an impact point
       vec2 pc = floor(uv * 0.8);
-      if (hash(pc + 4.0) < wear * 0.7) {
+      if (hash(pc + 4.0) < (wear - 0.4) * 1.1) { // only run-down buildings have broken panes
         vec2 q = fract(uv * 0.8) - vec2(0.3 + 0.4 * hash(pc), 0.3 + 0.4 * hash(pc + 1.0));
         float a = atan(q.y, q.x), d = length(q);
         float spoke = abs(fract(a * 1.27 + hash(pc + 2.0)) - 0.5);

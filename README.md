@@ -34,6 +34,10 @@ Saves live on the phone itself, so deleting the home-screen app or clearing Safa
 
 Phone → Settings → **Night** switches between Dark, Normal and Bright nights if it's hard to see after dark.
 
+## One city
+
+Downtown (north) and Lowtown (south) are one continuous map now: walk or drive straight down Grand Ave into Sunset Blvd, no loading. Buses, cabs and the Red Line still get you across town fast. Both big junctions have working traffic lights; cars stop at red lights, for each other, and for people, and you can't walk through them. Every interior has a lit EXIT door. The phone Map shows the whole city: drag to pan, pinch or +/- to zoom, Me to follow yourself, City for the full view.
+
 ## Downtown
 
 Walk north up Sunset Blvd, ride the bus from the stop by the motel ($2), or take a cab ($12). Downtown has:
