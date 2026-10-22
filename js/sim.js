@@ -169,11 +169,14 @@
   function minuteEvents(m) {
     const s = S(), h = (m % 1440) / 60;
     // guest arrivals: afternoon to after midnight
-    const arriveHours = h >= 13 || h < 1.5;
+    const arriveHours = h >= 10 || h < 2;
     if (arriveHours && s.flags.openForBusiness) {
       const vac = SIM.vacancy();
       const pending = s.guests.filter(g => g.state === 'arriving' || g.state === 'waiting').length;
-      const rate = (0.0045 + s.rep * 0.0022) * (s.tier >= 4 ? 2.2 : 1) * (vac ? 1 : 0.25);
+      // busier from the start; evenings are the rush
+      const evening = h >= 17 || h < 1 ? 1.4 : 1;
+      const early = s.day <= 4 ? 1.5 : 1;
+      const rate = (0.008 + s.rep * 0.0026) * evening * early * (s.tier >= 4 ? 2.2 : 1) * (vac ? 1 : 0.25);
       if (pending < 3 && Math.random() < rate) spawnArrival(guestType());
     }
     for (const g of s.guests) {
@@ -182,7 +185,7 @@
       if (g.state === 'waiting' && s.staff.clerk && m - (g.waitStart || g.arrive) > 20 && G.mapId !== 'office' && G.mapId !== 'lobby') {
         if (!g.narc || Math.random() < 0.5) { const k = SIM.checkIn(g); if (k != null) { UI.toast(`Night clerk checked in ${g.name}.`); removeGuestAgent(g); } } else SIM.turnAway(g);
       }
-      if (g.state === 'staying' && (h >= 19 || h < 3) && !g.requestDone && !g.requestFailed && Math.random() < 0.0035) maybeRequest(g);
+      if (g.state === 'staying' && (h >= 17 || h < 3) && !g.requestDone && !g.requestFailed && Math.random() < 0.006) maybeRequest(g);
       if (g.state === 'staying' && g.request && m - g.request.at > 300) { g.requestFailed = true; g.request = null; if (g.room >= 0) { s.rooms[g.room].request = null; if (G.mapId === 'city') G.refresh('room' + (g.room + 1)); } }
     }
     // checkout at 11:00

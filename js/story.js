@@ -148,7 +148,7 @@
   };
 
   // ---------------- interaction handlers ----------------
-  const H = {};
+  const H = ST.H = {};
   ST.handler = (id, o) => {
     if (/^room\d+$/.test(id)) return roomHandler(+id.slice(4) - 1);
     return H[id] || null;

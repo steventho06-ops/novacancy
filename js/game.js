@@ -12,15 +12,15 @@
 
   // ---------------- lighting by hour ----------------
   const KEYS = [
-    [0, { sunDir: [0.35, -1, -0.45], sunCol: [0.3, 0.34, 0.62], sky: [0.38, 0.37, 0.58], ground: [0.16, 0.13, 0.22], clear: [0.04, 0.03, 0.08], bloom: 0.8, bloomTh: 0.62, sat: 1.15, grade: [0.98, 0.97, 1.06], night: 1 }],
-    [5, { sunDir: [0.35, -1, -0.45], sunCol: [0.3, 0.34, 0.62], sky: [0.38, 0.37, 0.58], ground: [0.16, 0.13, 0.22], clear: [0.04, 0.03, 0.08], bloom: 0.8, bloomTh: 0.62, sat: 1.15, grade: [0.98, 0.97, 1.06], night: 1 }],
+    [0, { sunDir: [0.35, -1, -0.45], sunCol: [0.17, 0.19, 0.36], sky: [0.4, 0.39, 0.6], ground: [0.17, 0.14, 0.23], clear: [0.04, 0.03, 0.08], bloom: 0.62, bloomTh: 0.72, sat: 1.15, grade: [0.98, 0.97, 1.06], night: 1 }],
+    [5, { sunDir: [0.35, -1, -0.45], sunCol: [0.17, 0.19, 0.36], sky: [0.4, 0.39, 0.6], ground: [0.17, 0.14, 0.23], clear: [0.04, 0.03, 0.08], bloom: 0.62, bloomTh: 0.72, sat: 1.15, grade: [0.98, 0.97, 1.06], night: 1 }],
     [6.5, { sunDir: [-0.85, -0.45, -0.2], sunCol: [0.95, 0.6, 0.5], sky: [0.42, 0.36, 0.5], ground: [0.22, 0.17, 0.2], clear: [0.5, 0.36, 0.45], bloom: 0.55, bloomTh: 0.75, sat: 1.12, grade: [1.04, 0.97, 0.98], night: 0.4 }],
     [8.5, { sunDir: [-0.6, -0.8, -0.35], sunCol: [0.95, 0.86, 0.72], sky: [0.5, 0.52, 0.64], ground: [0.3, 0.27, 0.25], clear: [0.55, 0.6, 0.7], bloom: 0.32, bloomTh: 0.86, sat: 1.06, grade: [1.02, 1, 0.98], night: 0 }],
     [13, { sunDir: [-0.3, -1, -0.45], sunCol: [0.98, 0.94, 0.84], sky: [0.52, 0.56, 0.68], ground: [0.32, 0.29, 0.27], clear: [0.55, 0.65, 0.75], bloom: 0.28, bloomTh: 0.9, sat: 1.05, grade: [1, 1, 1], night: 0 }],
     [17, { sunDir: [0.55, -0.65, -0.4], sunCol: [1.0, 0.78, 0.55], sky: [0.5, 0.46, 0.58], ground: [0.3, 0.24, 0.22], clear: [0.6, 0.5, 0.5], bloom: 0.38, bloomTh: 0.82, sat: 1.1, grade: [1.04, 0.99, 0.95], night: 0 }],
     [19, { sunDir: [0.85, -0.38, -0.35], sunCol: [0.95, 0.42, 0.45], sky: [0.42, 0.32, 0.52], ground: [0.18, 0.13, 0.2], clear: [0.32, 0.2, 0.35], bloom: 0.6, bloomTh: 0.7, sat: 1.18, grade: [1.04, 0.95, 1.04], night: 0.55 }],
-    [20.5, { sunDir: [0.35, -1, -0.45], sunCol: [0.3, 0.34, 0.62], sky: [0.38, 0.37, 0.58], ground: [0.16, 0.13, 0.22], clear: [0.04, 0.03, 0.08], bloom: 0.8, bloomTh: 0.62, sat: 1.15, grade: [0.98, 0.97, 1.06], night: 1 }],
-    [24, { sunDir: [0.35, -1, -0.45], sunCol: [0.3, 0.34, 0.62], sky: [0.38, 0.37, 0.58], ground: [0.16, 0.13, 0.22], clear: [0.04, 0.03, 0.08], bloom: 0.8, bloomTh: 0.62, sat: 1.15, grade: [0.98, 0.97, 1.06], night: 1 }],
+    [20.5, { sunDir: [0.35, -1, -0.45], sunCol: [0.17, 0.19, 0.36], sky: [0.4, 0.39, 0.6], ground: [0.17, 0.14, 0.23], clear: [0.04, 0.03, 0.08], bloom: 0.62, bloomTh: 0.72, sat: 1.15, grade: [0.98, 0.97, 1.06], night: 1 }],
+    [24, { sunDir: [0.35, -1, -0.45], sunCol: [0.17, 0.19, 0.36], sky: [0.4, 0.39, 0.6], ground: [0.17, 0.14, 0.23], clear: [0.04, 0.03, 0.08], bloom: 0.62, bloomTh: 0.72, sat: 1.15, grade: [0.98, 0.97, 1.06], night: 1 }],
   ];
   function envAt(h) {
     let i = 0; while (i < KEYS.length - 2 && KEYS[i + 1][0] <= h) i++;
@@ -755,10 +755,10 @@
       L.push({ x: car.x + s * 2.4, y: 0.6, z: car.z + c * 2.4, r: 4.5, c: [1, 0.92, 0.75], i: 0.9 });
       if (car.kind === 'police' && car.siren) L.push({ x: car.x, y: 1.5, z: car.z, r: 6, c: Math.sin(G.t * 12) > 0 ? [1, 0.15, 0.2] : [0.2, 0.35, 1], i: 1.6 });
     }
-    for (const l of G.extraLights) L.push(typeof l === 'function' ? l() : l);
+    for (const l of G.extraLights) { const v = typeof l === 'function' ? l() : l; if (v) L.push(v); }
     // a soft pool of light around you after dark, so you can always see where you're walking
     const pg = G.map.indoor && !G.map.underground ? 0 : clamp(nf, 0, 1);
-    if (pg > 0.05 && G.player) L.unshift({ x: G.player.x, y: 1.7, z: G.player.z + 0.2, r: 5.5, c: [0.85, 0.82, 1], i: 0.55 * pg * (G.nightBoost || 1) });
+    if (pg > 0.05 && G.player) L.unshift({ x: G.player.x, y: 1.7, z: G.player.z + 0.2, r: 5, c: [0.85, 0.82, 1], i: 0.38 * pg * (G.nightBoost || 1) });
     return L;
   }
 

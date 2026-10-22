@@ -34,6 +34,13 @@ Saves live on the phone itself, so deleting the home-screen app or clearing Safa
 
 Phone → Settings → **Night** switches between Dark, Normal and Bright nights if it's hard to see after dark.
 
+## Things to do between guests
+
+- **Gigs** (Phone → Gigs): courier jobs around Lowtown. Pick up a parcel, follow the orange arrow, beat the clock. Fast deliveries tip 30%. Late-night jobs are shady and pay more, but the parcel counts as hot cargo.
+- **Street buyers**: strangers with a **$** over their head want something. Tap them to sell from your bag.
+- **Tour bus**: most days a bus drops off a few guests at once in the afternoon or evening.
+- **Wait for guests**: ring the bell at the front desk to skip ahead until the next guest walks in.
+
 ## Controls
 
 - **Tap** to walk, and tap things or people to use or talk to them.

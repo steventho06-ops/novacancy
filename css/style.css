@@ -316,3 +316,15 @@ button:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
   #authForm input { padding: 7px 10px; font-size: 16px; }
   #authForm small { display: none; }
 }
+
+/* ---------- gigs ---------- */
+.gigchip { position: absolute; left: max(10px, var(--safe-l)); top: calc(64px + var(--safe-t)); max-width: min(62vw, 330px); padding: 6px 10px; background: var(--panel); color: var(--text); font: 14px var(--px); text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; pointer-events: auto; }
+.gigchip b { color: var(--yellow); font-weight: normal; margin-right: 4px; }
+.gigchip span { color: var(--cyan); margin-left: 6px; }
+.gigchip.shady b { color: var(--purple); }
+.gigchip.late span { color: var(--red); }
+.marker.gigm i { background: #ffb43a; filter: drop-shadow(0 0 5px #ffb43a); }
+.marker.gigm.shady i { background: var(--purple); filter: drop-shadow(0 0 5px var(--purple)); }
+.card.gig .btn { margin-top: 6px; }
+.card.gig.shady h4 { color: var(--purple); }
+@media (orientation: landscape) and (max-height: 500px) { .gigchip { top: calc(56px + var(--safe-t)); font-size: 13px; } }

@@ -141,7 +141,7 @@
     // icons over heads and doors
     const want = new Map();
     if (!busy || G.busy) {
-      for (const a of G.agents) if (a.icon && !a.hidden) want.set('a' + a.id, [a.x, 1.75, a.z, a.icon === 'alert' ? '!' : a.icon === 'suspect' ? '?' : a.icon === 'bell' ? '!' : '•', a.icon === 'bell' ? 'req' : a.icon]);
+      for (const a of G.agents) if (a.icon && !a.hidden) want.set('a' + a.id, [a.x, 1.75, a.z, a.icon === 'alert' ? '!' : a.icon === 'suspect' ? '?' : a.icon === 'bell' ? '!' : a.icon === 'deal' ? '$' : '•', a.icon === 'bell' ? 'req' : a.icon]);
       if (G.mapId === 'city' && S().tier <= 3) S().rooms.forEach((r, k) => { if (r.request && k < SIM.roomCount()) { const d = MOTEL.roomDoor(k, S().tier); want.set('r' + k, [d.x, d.y + 2.1, d.z + 0.2, '$', 'req']); } });
       if ((G.mapId === 'office' || G.mapId === 'lobby') && SIM.waiting().length) { const e = G.scene.byId.desk; if (e) want.set('desk', [e.o.x, 1.9, e.o.z, '!', 'req']); }
     }
@@ -180,7 +180,7 @@
 
   // ---------------- dialogue ----------------
   let dlgResolve = null, typing = null;
-  UI.setGuestFace = g => { st.guestLook = SIM.lookFor(g); st.guestName = g.name; st.guestKey = 'g' + g.seed; };
+  UI.setGuestFace = g => { st.guestLook = g.look || SIM.lookFor(g); st.guestName = g.name; st.guestKey = g.key || 'g' + g.seed; };
   function portrait(who) {
     if (!who) return null;
     if (who === 'guest') return PORTRAITS.get(st.guestKey || 'guest', st.guestLook || CHARS.randomLook(1));
@@ -266,7 +266,8 @@
   UI.closeDream = () => { $('dream').hidden = true; };
 
   // ---------------- phone ----------------
-  const TABS = [['home', 'Home', 'hphone', '#3ff0ff'], ['msgs', 'Texts', 'letter', '#b44bff'], ['hotel', 'Hotel', 'key', '#ffd84a'], ['bag', 'Bag', 'bag', '#ff4fa3'], ['map', 'Map', 'frame', '#59ff8a']];
+  UI.TITLES = UI.TITLES || {};
+  const TABS = UI.TABS = [['home', 'Home', 'hphone', '#3ff0ff'], ['msgs', 'Texts', 'letter', '#b44bff'], ['hotel', 'Hotel', 'key', '#ffd84a'], ['bag', 'Bag', 'bag', '#ff4fa3'], ['map', 'Map', 'frame', '#59ff8a']];
   UI.phoneBuzz = function (from) { SFX.play('phone'); if (!st.title) UI.toast(`New text from ${from}`, 'guest'); UI.refreshHud(); };
   UI.togglePhone = () => st.phone ? UI.closePhone() : UI.openPhone();
   UI.closePhone = () => { $('phone').hidden = true; st.phone = null; G.paused = false; };
@@ -275,7 +276,7 @@
     const p = $('phone');
     st.phone = tab; p.hidden = false; G.paused = true;
     const s = S();
-    const title = { home: 'Burner', msgs: 'Messages', hotel: 'The Starlite', bag: 'Bag', map: 'Lowtown', settings: 'Settings' }[tab];
+    const title = (UI.TITLES = Object.assign({ home: 'Burner', msgs: 'Messages', hotel: 'The Starlite', bag: 'Bag', map: 'Lowtown', settings: 'Settings' }, UI.TITLES || {}))[tab];
     p.innerHTML = `<div class="pbody"><div class="pstatus"><span>${clockStr()}</span><span>DAY ${s.day}</span><span>${G.raining ? 'RAIN' : 'CLEAR'} ▮▮▮</span></div>
       <div class="ptitle"><h3>${title}</h3>${tab === 'home' ? '<button type="button" class="x" id="pSet" aria-label="Settings">⚙</button>' : ''}<button type="button" class="x" id="pX" aria-label="Close">×</button></div>
       <div class="pmain" id="pMain"></div>
@@ -288,7 +289,7 @@
     APPS[tab](main);
     SFX.play('open');
   };
-  const APPS = {};
+  const APPS = UI.APPS = {};
   APPS.home = function (el) {
     const s = S(), o = STORY.objective();
     const next = !s.flags.paid3 ? D.DEBT.find((d, i) => !s.flags['paid' + (i + 1)]) : null;

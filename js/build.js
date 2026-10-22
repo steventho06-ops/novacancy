@@ -23,7 +23,7 @@
   const K = {
     // ---------- city ----------
     lamp: { build: (mb, o) => { if (o.small) F.lamp(mb, o.x, o.y || 0, o.z, true); else C.streetLamp(mb, o.x, o.z, o.rot || 0); },
-      light: o => { if (o.small) return { x: o.x, y: (o.y || 0) + 0.7, z: o.z, r: 3.2, c: WARM, i: 0.9 }; const s = Math.sin(o.rot || 0), c = Math.cos(o.rot || 0); return { x: o.x + s * 0.72, y: 2.7, z: o.z + c * 0.72, r: 11, c: [1, 0.82, 0.56], i: 1.45, night: true }; }, foot: o => o.small ? [] : post(0.12)(o) },
+      light: o => { if (o.small) return { x: o.x, y: (o.y || 0) + 0.7, z: o.z, r: 3.2, c: WARM, i: 0.9 }; const s = Math.sin(o.rot || 0), c = Math.cos(o.rot || 0); return { x: o.x + s * 0.72, y: 2.7, z: o.z + c * 0.72, r: 10, c: [1, 0.8, 0.52], i: 1.5, night: true }; }, foot: o => o.small ? [] : post(0.12)(o) },
     traffic: { build: (mb, o) => C.trafficLight(mb, o.x, o.z, o.rot, 'g'), foot: post(0.14) },
     hydrant: { build: (mb, o) => C.hydrant(mb, o.x, o.z), foot: post(0.2) },
     trashcan: { build: (mb, o) => C.trashCan(mb, o.x, o.z), foot: post(0.26) },

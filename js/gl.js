@@ -214,6 +214,7 @@ void main(){
       sh = texture(uShadow, vec3(sc.xy, sc.z - 0.002));
   }
   vec3 light = amb + uSunCol * nd * sh;
+  vec3 pl = vec3(0.0);
   vec3 spec = vec3(0.0);
   vec3 V = -uViewDir;
   for (int i = 0; i < ${NL}; i++) {
@@ -223,14 +224,20 @@ void main(){
     // banded falloff with ordered dither: hand-painted light pools
     float q = floor(att * uBands + 0.5 + (dith - 0.5) * 0.55) / uBands;
     float l = max(dot(n, L), 0.0) * 0.7 + 0.3;
-    light += uLC[i] * q * l;
+    pl += uLC[i] * q * l;
     if (gloss > 0.0) {
+      // small, tinted glints on wet ground instead of big white blobs
       vec3 H = normalize(L + V);
-      float s = pow(max(dot(n, H), 0.0), 18.0 + gloss * 50.0);
-      float ra = clamp(1.0 - dist / (uLP[i].w * 1.7), 0.0, 1.0);
-      spec += uLC[i] * step(0.35 - dith * 0.25, s * ra * gloss * 1.6) * 0.55 * gloss;
+      float s = pow(max(dot(n, H), 0.0), 22.0 + gloss * 40.0);
+      float ra = clamp(1.0 - dist / (uLP[i].w * 1.5), 0.0, 1.0);
+      vec3 tint = uLC[i] / max(max(uLC[i].r, max(uLC[i].g, uLC[i].b)), 0.001);
+      tint = mix(tint, tint * tint, 0.5); // keep the warm lamp colour in the reflection
+      spec += tint * step(0.38 - dith * 0.25, s * ra * gloss * 1.6) * 0.3 * gloss * min(1.2, max(uLC[i].r, max(uLC[i].g, uLC[i].b)));
     }
   }
+  // overlapping lamps add up softly instead of blowing out to white
+  light += 1.15 * (vec3(1.0) - exp(-pl / 1.15));
+  spec = min(spec, vec3(0.38));
   float em = id == 8.0 ? vE * uGlassGlow : vE;
   vec3 col = base * light + spec + base * em * 1.7;
   if (id == 15.0) col = base * (0.6 + vE);
