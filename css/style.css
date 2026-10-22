@@ -297,3 +297,22 @@ button:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
 .gbody.wide .bar { height: 8px; margin-bottom: 0; }
 .gbody.wide .bar i { background: var(--green); transition: width 0.15s steps(3); }
 @media (prefers-reduced-motion: reduce) { .chint.bump, .cdone { animation: none; } }
+
+/* ---------- sign in ---------- */
+.auth { position: relative; z-index: 2; align-self: center; width: min(92vw, 380px); max-height: calc(100vh - 24px); overflow: auto; padding: 14px 16px 16px; background: rgba(14, 11, 24, 0.94); box-shadow: 0 -3px 0 0 var(--pink), 0 3px 0 0 var(--pink), -3px 0 0 0 var(--pink), 3px 0 0 0 var(--pink), 0 0 26px rgba(255, 79, 163, 0.35); animation: pop 0.2s steps(3); }
+.atabs { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 12px; }
+.atabs button { padding: 9px 6px; background: var(--panel3); color: var(--dim); font: 16px var(--px); box-shadow: 0 3px 0 #120e20; }
+.atabs button.on { background: var(--pink); color: #fff; box-shadow: 0 3px 0 #a8206a; }
+#authForm { display: flex; flex-direction: column; gap: 6px; }
+#authForm label { color: var(--cyan); font-size: 14px; letter-spacing: 0.04em; }
+#authForm input { width: 100%; padding: 10px 12px; border: 0; background: var(--panel3); color: #fff; font: 18px var(--px); outline: 2px solid var(--edge); user-select: text; -webkit-user-select: text; touch-action: auto; }
+#authForm input:focus { outline-color: var(--pink); }
+#authForm .btn { margin-top: 6px; width: 100%; font-size: 20px; }
+#authForm .btn:disabled { opacity: 0.6; }
+#authForm small { color: var(--dim); font-size: 12px; line-height: 1.4; }
+.aerr { min-height: 1.2em; margin: 2px 0 0; color: var(--red); font-size: 14px; }
+@media (orientation: landscape) and (max-height: 500px) {
+  .auth { position: absolute; right: max(20px, var(--safe-r)); top: 50%; transform: translateY(-50%); width: min(46vw, 360px); max-height: calc(100vh - 20px); animation: none; }
+  #authForm input { padding: 7px 10px; font-size: 16px; }
+  #authForm small { display: none; }
+}

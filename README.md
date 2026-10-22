@@ -18,6 +18,10 @@ To update the game later, upload the changed files to the same repo. Vercel rede
 
 Open the link in Safari or Chrome, tap **Share** (or the browser menu), then **Add to Home Screen**. Launch the game from the new icon and turn your phone sideways. It runs fullscreen, with no address bar.
 
+## Accounts
+
+On the live site you sign in with a username and password before playing. Your progress is saved to your account online, so you can sign in on any phone or computer and keep going. Accounts and saves are stored in the project's Upstash Redis database (Vercel → Storage). The server code is in `api/`.
+
 ## Saving
 
 The game saves on its own every few seconds, after everything you do, and the moment you leave the app. Open it again and tap **Continue**.

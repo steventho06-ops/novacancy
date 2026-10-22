@@ -369,6 +369,7 @@
       <label>Zoom <span class="seg"><button type="button" data-z="0.8">−</button><button type="button" data-z="1">1×</button><button type="button" data-z="1.25">+</button></span></label>
     </div>
     <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap"><button type="button" class="btn" id="sSave">Save</button><button type="button" class="btn ghost" id="sQuit">Quit to title</button><button type="button" class="btn ghost" id="sFull">Fullscreen</button></div>
+    ${window.CLOUD && CLOUD.mode === 'cloud' && CLOUD.user ? `<div class="savecode"><b>Account</b><small>Signed in as <span style="color:var(--cyan)">${esc(CLOUD.user)}</span>. Your progress saves to your account automatically.</small><div style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" class="btn ghost" id="sOut">Sign out</button></div></div>` : ''}
     <div class="savecode"><b>Move your save</b><small>Copy this code, then paste it in Settings on the home-screen app or another phone.</small>
       <div style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" class="btn ghost" id="sCopy">Copy save code</button><button type="button" class="btn ghost" id="sPasteBtn">Load a save code</button></div>
       <div id="sPasteBox" hidden><textarea id="sCode" rows="2" placeholder="Paste a code that starts with NV1." aria-label="Save code"></textarea><button type="button" class="btn" id="sLoad">Load this save</button></div></div>
@@ -381,6 +382,8 @@
     el.querySelectorAll('[data-z]').forEach(b => tap(b, () => { G.zoom = +b.dataset.z; }));
     tap(el.querySelector('#sSave'), () => { G.save(); UI.toast('Saved.', 'good'); });
     tap(el.querySelector('#sQuit'), () => { G.save(); location.reload(); });
+    const out = el.querySelector('#sOut');
+    if (out) tap(out, () => { out.disabled = true; out.textContent = 'Signing out...'; G.save(); CLOUD.signOut(); });
     const code = el.querySelector('#sCode');
     tap(el.querySelector('#sCopy'), () => {
       const c = G.exportSave(); if (!c) { UI.toast('No saved game yet.', 'bad'); return; }

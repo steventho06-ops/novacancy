@@ -840,6 +840,7 @@
       if (prev) localStorage.setItem(SAVE_KEY + '-bak', prev);
       localStorage.setItem(SAVE_KEY, json);
     } catch (e) { }
+    if (window.CLOUD && CLOUD.onSaved) CLOUD.onSaved();
   }
   function parseSave(str) { try { const s = str ? JSON.parse(str) : null; return s && s.flags && s.day ? migrate(s) : null; } catch (e) { return null; } }
   // Saves from older versions of the game: keep everything, fill in anything a newer version added.
