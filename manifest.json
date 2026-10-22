@@ -1,0 +1,17 @@
+{
+  "name": "No Vacancy",
+  "short_name": "No Vacancy",
+  "description": "Neon-noir pixel-art open world: run a motel, work the black market, build a luxury hotel.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "fullscreen",
+  "display_override": ["fullscreen", "standalone"],
+  "orientation": "landscape",
+  "background_color": "#05030a",
+  "theme_color": "#05030a",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>No Vacancy</title>
+<meta name="description" content="A neon-noir pixel-art open world: run a rundown motel, deal on the black market, dodge the cops and build a luxury hotel.">
+<meta name="theme-color" content="#05030a">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="No Vacancy">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<link rel="icon" type="image/png" href="icons/icon-32.png">
+<link rel="stylesheet" href="css/font.css">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<canvas id="view"></canvas>
+
+<div id="hud" hidden>
+  <div class="hrow">
+    <div class="chip clock pix" id="clock"><svg class="ico" id="wxIcon" viewBox="0 0 8 8"></svg><div><b id="clockText">10:00 PM</b><small id="dayText">DAY 1</small></div></div>
+    <div class="chip money pix" id="money">$0</div>
+    <div class="hright">
+      <div class="meter heat pix" id="heat" title="Police heat"><span>HEAT</span><i></i><i></i><i></i><i></i><i></i></div>
+      <div class="meter stars pix" id="stars" title="Hotel rating">★☆☆☆☆</div>
+    </div>
+  </div>
+  <button type="button" class="obj pix" id="obj" hidden><b id="objTitle">Objective</b><span id="objText"></span><div class="objbar" id="objBar" hidden><i id="objFill"></i></div></button>
+  <div class="hbottom">
+    <div class="tools">
+      <button type="button" class="tool pix" id="btnPhone" aria-label="Phone"><svg class="ico" viewBox="0 0 10 10" id="icoPhone"></svg><small>Phone</small><span class="badge" id="msgBadge" hidden>1</span></button>
+      <button type="button" class="tool pix" id="btnBag" aria-label="Bag"><svg class="ico" viewBox="0 0 10 10" id="icoBag"></svg><small id="bagText">Bag</small></button>
+    </div>
+    <button type="button" class="act" id="actBtn" hidden><span class="k">E</span><span id="actName">Use</span></button>
+  </div>
+</div>
+<div class="icons" id="icons"></div>
+<div class="marker" id="marker" hidden><i></i></div>
+<div class="joy" id="joy" hidden><div></div></div>
+<div class="bubble pix" id="bubble" hidden></div>
+<div class="banner" id="banner"></div>
+<div class="toasts" id="toasts"></div>
+<div class="pops" id="pops"></div>
+
+<div class="dialog" id="dialog" hidden>
+  <div class="dport pix" id="dPortrait"></div>
+  <div class="dbody pix"><div class="dname" id="dName"></div><div class="dtext" id="dText"></div><div class="dchoices" id="dChoices"></div><div class="dnext" id="dNext">▼</div></div>
+</div>
+
+<div class="popup" id="popup" hidden></div>
+<div class="page" id="page" hidden></div>
+<div class="phone" id="phone" hidden></div>
+<div class="sheet" id="sheet" hidden></div>
+<div class="game" id="game" hidden></div>
+<div class="card2" id="card" hidden></div>
+<div class="title" id="title" hidden></div>
+<div class="dream" id="dream" hidden></div>
+<div class="fade" id="fade"></div>
+<div class="rotate" id="rotate"><div class="rphone"></div><div>Turn your phone sideways</div><small>No Vacancy is played in landscape</small></div>
+<div class="boot" id="boot"><div style="font-size:22px">NO VACANCY</div><div style="font-size:11px;color:#9a8fc0" id="bootText">loading lowtown...</div></div>
+
+<script src="js/gl.js"></script>
+<script src="js/mesh.js"></script>
+<script src="js/kit.js"></script>
+<script src="js/models-city.js"></script>
+<script src="js/models-motel.js"></script>
+<script src="js/models-int.js"></script>
+<script src="js/models-chars.js"></script>
+<script src="js/maps.js"></script>
+<script src="js/build.js"></script>
+<script src="js/data.js"></script>
+<script src="js/audio.js"></script>
+<script src="js/sim.js"></script>
+<script src="js/story.js"></script>
+<script src="js/portraits.js"></script>
+<script src="js/game.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/chores.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>
