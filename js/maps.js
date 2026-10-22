@@ -38,6 +38,11 @@
     m.rect(50, 0, 8, 44, 'walk');
     m.rect(48, 44, 10, 9, 'pier');
     m.rect(51, 53, 7, 25, 'water');
+    m.waterX = 51; m.waterZ = 44;
+    // crosswalks: pedestrians only step onto the road here (tile rectangles, inclusive)
+    m.crosswalks = [];
+    for (const z of [7, 19, 33, 44, 52, 62, 72]) m.crosswalks.push({ x0: 26, z0: z, x1: 31, z1: z + 1, across: 'z' });
+    for (const x of [9, 24, 32, 40]) m.crosswalks.push({ x0: x, z0: 46, x1: x + 1, z1: 51, across: 'x' });
     m.rect(48, 53, 3, 25, 'pier');
     m.rect(35, 55, 13, 23, 'gravel');
     // south-west block
@@ -156,6 +161,11 @@
     // docks & alleys
     O.push({ k: 'barrels', x: 47.4, z: 70, n: 6 }, { k: 'nets', x: 49.6, z: 64 }, { k: 'nets', x: 49.4, z: 72 });
     O.push({ k: 'tent', x: 1.4, z: 33, rot: Math.PI / 2 }, { k: 'barrelfire', id: 'alleyfire', x: 1.5, z: 30.5 });
+    // the slums: camps in the alley, behind the shops and down by the warehouse
+    O.push({ k: 'bedroll', x: 2.6, z: 28.6, rot: 0.2 }, { k: 'shopcart', x: 3.0, z: 34.6, rot: 0.6 }, { k: 'cardboard', x: 0.8, z: 36.2 });
+    O.push({ k: 'tent', x: 1.4, z: 65, rot: Math.PI / 2, col: '#6a4a3a' }, { k: 'bedroll', x: 2.6, z: 67.5, rot: -0.3, col: '#6a3a3a' }, { k: 'barrelfire', x: 2.2, z: 63.4 }, { k: 'shopcart', x: 0.9, z: 62.2, rot: 1.2 });
+    O.push({ k: 'bedroll', x: 35.0, z: 56.5, rot: 1.4, col: '#3a5a3a' }, { k: 'cardboard', x: 34.6, z: 58.4 }, { k: 'shopcart', x: 35.2, z: 60.3, rot: -0.4 });
+    O.push({ k: 'bedroll', x: 13.0, z: 66.8, rot: 0.1, col: '#5a4a6a' }, { k: 'cardboard', x: 13.4, z: 68.8 });
     O.push({ k: 'trashbags', x: 13.8, z: 66 }, { k: 'graffitiwall', x: 34.95, z: 60, w: 3, h: 1.2, dir: 'z', seed: 12 });
     O.push({ k: 'parked', x: 15, z: 75, rot: 0, kind: 'van', col: '#5a5a64' });
     return m;

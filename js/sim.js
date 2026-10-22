@@ -156,9 +156,10 @@
   SIM.newDay = function () {
     const s = S();
     rollPrices(s);
-    s.weather = Math.random() < 0.45 ? 'rain' : 'clear';
+    // mostly dry: a rainy day now and then, showers come and go during the day (see extras.js)
+    s.weather = Math.random() < 0.2 ? 'rain' : 'clear';
     G.raining = s.weather === 'rain';
-    if (G.raining) s.flags.wetGround = 1; else s.flags.wetGround = Math.random() < 0.4 ? 1 : 0;
+    if (G.raining) s.flags.wetGround = 1; else s.flags.wetGround = Math.random() < 0.15 ? 1 : 0;
     s.flags.raidDay = null;
     // the rival tower grows
     s.flags.towerFloors = Math.min(9, (s.flags.towerFloors || 0) + (s.flags.vanceStopped ? 0 : 0.5));
@@ -286,7 +287,7 @@
       const h = G.hour();
       if (s.tier <= 3) for (const g of SIM.staying()) if (g.room >= 0 && (h > 17 || h < 1) && Math.random() < 0.45) spawnGuestAgent(g, 'room');
       spawnTraffic();
-      for (let i = 0; i < (G.lowGfx ? 4 : 7); i++) spawnPed(true);
+      for (let i = 0; i < (G.lowGfx ? 5 : 10); i++) spawnPed(true);
       spawnCops();
       SIM.spawnCat();
     }
@@ -369,16 +370,43 @@
 
   // ---------------- pedestrians ----------------
   const WALKS = [[25.2, 2], [25.2, 76], [32.8, 2], [32.8, 76], [2, 45], [48, 45], [2, 52.8], [48, 52.8], [16, 4], [40, 44.6], [8, 53], [36, 53]];
+  // pedestrians keep to sidewalks and cross at crosswalks, waiting for cars
+  function inCross(x, z) { for (const c of G.map.crosswalks || []) if (x >= c.x0 && x <= c.x1 && z >= c.z0 && z <= c.z1) return c; return null; }
+  const pedFilter = (x, z) => G.map.tile(x, z) !== 'road' || !!inCross(x, z);
+  function pedGate(a) {
+    const [nx, nz] = a.path[0];
+    const here = G.map.tile(Math.floor(a.x), Math.floor(a.z));
+    if (here === 'road') return true; // already crossing: keep going
+    const c = inCross(Math.floor(nx), Math.floor(nz));
+    if (!c) return true;
+    for (const car of G.cars) {
+      const L = car.lane, dir = L.dir;
+      // distance along the lane to the crossing, positive = still coming
+      const along = L.axis === 'z' ? ((c.z0 + c.z1 + 1) / 2 - car.pos) * dir : ((c.x0 + c.x1 + 1) / 2 - car.pos) * dir;
+      const onRoad = L.axis === 'z' ? c.across === 'z' : c.across === 'x';
+      if (onRoad && along > -1.5 && along < 9 && car.v > 0.3) return false;
+    }
+    return true;
+  }
+  SIM.pedFilter = pedFilter; SIM.pedGate = pedGate;
+  let pedN = 0;
   function spawnPed(anywhere) {
-    if (G.agents.filter(a => a.kind === 'ped').length >= (G.lowGfx ? 4 : 8)) return;
-    const seed = Math.floor(Math.random() * 1e6);
+    if (G.agents.filter(a => a.kind === 'ped').length >= (G.lowGfx ? 5 : 11)) return;
+    const seed = Math.floor(Math.random() * 160); // a pool of 160 different faces and outfits
+    pedN++;
     const start = pick(WALKS);
     let x = start[0], z = start[1];
     if (anywhere) { const b = pick(WALKS); const t = Math.random(); x = start[0] + (b[0] - start[0]) * t; z = start[1] + (b[1] - start[1]) * t; const n = G.nearestWalkable(x, z); if (n) { x = n[0]; z = n[1]; } }
-    const look = CHARS.randomLook(seed, Math.random() < 0.15 ? 'worker' : 'ped');
-    const a = G.addAgent({ id: 'p' + seed, kind: 'ped', look, lookKey: 'p' + (seed % 40), x, z, spd: rnd(1.4, 2.1), ghost: true });
+    const look = CHARS.randomLook(seed, 'ped');
+    if (!pedFilter(Math.floor(x), Math.floor(z))) { const n = nearestPedTile(x, z); if (n) { x = n[0]; z = n[1]; } }
+    const a = G.addAgent({ id: 'p' + seed + '_' + pedN, kind: 'ped', look, lookKey: 'p' + seed, x, z, spd: rnd(1.3, 2.1), ghost: true, walkFilter: pedFilter, gate: pedGate });
     if (Math.random() < 0.2) a.pose = { phone: true };
     pedNext(a);
+  }
+  function nearestPedTile(x, z) {
+    let best = null, bd = 1e9;
+    for (let dz = -5; dz <= 5; dz++) for (let dx = -5; dx <= 5; dx++) { const tx = Math.floor(x) + dx, tz = Math.floor(z) + dz; if (G.walkableTile(tx, tz) && pedFilter(tx, tz)) { const d = dx * dx + dz * dz; if (d < bd) { bd = d; best = [tx + 0.5, tz + 0.5]; } } }
+    return best;
   }
   function pedNext(a) {
     const t = pick(WALKS);

@@ -14,7 +14,7 @@
     grass: { y: 0.1, c: P.grass, m: MT.grass, w: 0.4 },
     dirt: { y: 0.04, c: '#6a5640', m: MT.concrete, w: 0.9 },
     gravel: { y: 0.05, c: '#5c5650', m: MT.roof, w: 0.6 },
-    water: { y: -0.9, c: '#1f3a4f', m: MT.water, w: 0 },
+    water: { y: -0.9, c: '#1f5582', m: MT.water, w: 0 },
     pier: { y: 0.2, c: '#6e5238', m: MT.wood, w: 0.8 },
     tiles: { y: 0.14, c: '#9fb7c0', m: MT.tile, w: 0.3 },
     pooldeck: { y: 0.14, c: '#c9bfae', m: MT.slab, w: 0.5 },

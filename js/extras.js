@@ -151,7 +151,7 @@
       const left = g.mins - (absMin() - g.start);
       h += `<div class="card"><h4>CURRENT GIG</h4><b>${esc(g.client)}: ${esc(SPOTS[g.from].name)} → ${esc(SPOTS[g.to].name)}</b><p>${g.stage === 'pickup' ? 'Go pick up the parcel.' : 'Parcel in hand. Deliver it.'} ${left >= 0 ? `${Math.floor(left / 60)}h ${Math.floor(left % 60)}m left.` : 'You\'re late: half pay.'} Pays ${fmt$(g.pay)}${g.shady ? ' (hot cargo)' : ''}.</p><button type="button" class="btn ghost small" id="gigDrop">Cancel gig</button></div>`;
     }
-    h += `<p style="color:var(--dim);font-size:12px;margin:6px 0 10px">Courier jobs around Lowtown. Grab a parcel, follow the arrow, beat the clock. Deliver fast for a 30% tip. ${hour() >= 23 || hour() < 7 ? 'Only the shady jobs are up this late.' : 'New jobs every few hours.'}</p>`;
+    h += `<p style="color:var(--dim);font-size:14px;margin:6px 0 10px">Courier jobs around Lowtown. Grab a parcel, follow the arrow, beat the clock. Deliver fast for a 30% tip. ${hour() >= 23 || hour() < 7 ? 'Only the shady jobs are up this late.' : 'New jobs every few hours.'}</p>`;
     h += (s.gigOffers || []).map(o => `<div class="card gig ${o.shady ? 'shady' : ''}"><h4>${o.shady ? 'NO QUESTIONS ASKED' : o.rush ? 'RUSH' : 'DELIVERY'} · ${esc(o.client)}</h4><b>${esc(SPOTS[o.from].name)} → ${esc(SPOTS[o.to].name)}</b><p>"${esc(o.note)}"</p><p><span class="tag deal">${fmt$(o.pay)}</span> within ${Math.floor(o.mins / 60)}h ${o.mins % 60}m${o.shady ? ' · <span class="hot">hot cargo, cops will care</span>' : ''}</p><button type="button" class="btn small" data-gig="${o.id}" ${g ? 'disabled' : ''}>Take the job</button></div>`).join('') || '<p style="color:var(--dim)">No jobs right now. Check back later.</p>';
     el.innerHTML = h;
     el.querySelectorAll('[data-gig]').forEach(b => b.addEventListener('click', () => { const o = (s.gigOffers || []).find(x => x.id === +b.dataset.gig); if (o) acceptGig(o); }));
@@ -215,8 +215,85 @@
     UI.refreshHud();
   }
   const canTalk0 = STORY.canTalk, talk0 = STORY.talk;
-  STORY.canTalk = a => !!a.buyer || canTalk0(a);
-  STORY.talk = a => a.buyer ? buyerTalk(a) : talk0(a);
+  STORY.canTalk = a => !!a.buyer || a.kind === 'homeless' || canTalk0(a);
+  STORY.talk = a => a.buyer ? buyerTalk(a) : a.kind === 'homeless' ? homelessTalk(a) : talk0(a);
+
+  // =====================================================================
+  // THE SLUMS: people living rough. Kindness pays back in its own way.
+  // =====================================================================
+  const CAMP = [
+    { id: 'hl_walt', name: 'Walt', x: 2.6, z: 28.9, yaw: 1.2, sit: true },
+    { id: 'hl_maggie', name: 'Maggie', x: 2.4, z: 31.6, yaw: -1.4 },
+    { id: 'hl_tito', name: 'Tito', x: 2.6, z: 67.7, yaw: 1.6, sit: true },
+    { id: 'hl_june', name: 'June', x: 3.2, z: 63.8, yaw: -1.2 },
+    { id: 'hl_preacher', name: 'The Preacher', x: 35.0, z: 56.8, yaw: -1.6, sit: true },
+    { id: 'hl_kid', name: 'Skids', x: 13.0, z: 67.0, yaw: 1.4, sit: true },
+    { id: 'hl_rover', name: 'Rover', x: 12.5, z: 53.0, yaw: 0, wander: true },
+  ];
+  const HL_LINES = {
+    hl_walt: ['Ray used to bring me coffee. Every morning. Never asked for nothing.', 'Thirty years I drove a bus on Sunset. Now I just watch \'em go by.'],
+    hl_maggie: ['Fire\'s for everybody. Warm your hands.', 'The cops sweep the alley Tuesdays. Don\'t keep nothing here you want to keep.'],
+    hl_tito: ['You got a smoke? No? That\'s alright, kid.', 'Vance\'s people came through with a clipboard. Counting us. Like inventory.'],
+    hl_june: ['I had a flower shop on Harbor. Lease went up four times in a year.', 'Mind the third step on the metro stairs. Broke my wrist on it.'],
+    hl_preacher: ['The meek shall inherit the earth. The developers will have zoned it first.', 'Repent! Or at least tip your waitress.'],
+    hl_kid: ['I\'m not homeless, I\'m between apartments. Like, all of them.', 'I can get into any car in under a minute. Not that I would. Anymore.'],
+    hl_rover: ['Seen a cat with a neon collar? Looks like she owns the place.', 'Every night a black car parks by the construction site. Engine running. Nobody gets out.'],
+  };
+  function spawnCamp() {
+    const s = S();
+    for (const c of CAMP) {
+      if (G.agent(c.id)) continue;
+      const seed = 200 + CAMP.indexOf(c) * 7;
+      const a = G.addAgent({ id: c.id, kind: 'homeless', name: c.name, look: CHARS.randomLook(seed, 'homeless'), lookKey: 'hl' + seed, x: c.x, z: c.z, spd: 0.9, home: [c.x, c.z], wander: !!c.wander, ghost: true, walkFilter: SIM.pedFilter, gate: SIM.pedGate });
+      a.yaw = a.faceYaw = c.yaw;
+      if (c.sit) a.pose = { sit: true };
+      if (s.flags['helped_' + c.id] >= 3) a.icon = null;
+    }
+  }
+  function stepCamp() {
+    for (const a of G.agents) if (a.kind === 'homeless' && a.wander && !a.path && Math.random() < 0.08) {
+      const t = pick([[12.5, 53], [2.5, 44.5], [24.5, 53], [3, 30]]);
+      if (!G.pathTo(a, t[0], t[1])) a.path = null;
+    }
+  }
+  const populate0 = SIM.populate;
+  SIM.populate = function (id, restored) {
+    populate0(id, restored);
+    if (id === 'city') spawnCamp();
+  };
+  async function homelessTalk(a) {
+    const s = S(), id = a.id;
+    UI.setGuestFace({ key: 'hlf' + id, look: a.look, name: a.name });
+    const helped = s.flags['helped_' + id] || 0;
+    await say('guest', pick(HL_LINES[id] || ['...']), { name: a.name });
+    const opts = [];
+    if (s.money >= 5) opts.push('Give $5');
+    if (SIM.count('coffee')) opts.push('Give a coffee');
+    opts.push('Ask what\'s going on', 'Leave');
+    const c = opts[await choose(opts)];
+    if (c === 'Give $5' || c === 'Give a coffee') {
+      if (c === 'Give $5') SIM.money(-5); else SIM.take('coffee', 1);
+      s.flags['helped_' + id] = helped + 1;
+      s.karma = (s.karma || 0) + 1;
+      s.rep = Math.min(5, s.rep + 0.02);
+      SFX.play('coin');
+      const roll = Math.random();
+      if (helped + 1 === 3) {
+        await say('guest', 'You\'re alright, kid. Here. Found it in a dumpster behind the Blue Note. Figure you can use it more than me.', { name: a.name });
+        const gift = pick(['lockpick', 'watch', 'phone', 'perfume']);
+        SIM.give(gift, 1); await UI.itemGet(gift, 1);
+      } else if (roll < 0.35 && s.heat > 0.3) {
+        await say('guest', 'Tell you what. Cops ask, I never seen you. And I\'ll whistle if they come round the motel.', { name: a.name });
+        SIM.heat(-0.5); UI.toast('Heat down a little: the street has your back.', 'good');
+      } else if (roll < 0.7) {
+        const it = I[s.flags.hotDemand], tip = I[s.flags.tipItem];
+        await say('guest', `Word on the street: everybody's looking for ${it ? it.name.toLowerCase() : 'something'} today. And Sable's sitting on a pile of ${tip ? tip.name.toLowerCase() : 'junk'}. Cheap.`, { name: a.name });
+      } else await say('guest', pick(['God bless.', 'That\'s a hot meal. Thank you.', 'You\'re Ray\'s kid, huh? It shows.']), { name: a.name });
+    } else if (c === 'Ask what\'s going on') {
+      const lines = HL_LINES[id] || []; await say('guest', lines[1] || lines[0] || 'Same as always.', { name: a.name });
+    }
+    a.faceYaw = null;
+  }
 
   // =====================================================================
   // TOUR BUS
@@ -267,6 +344,18 @@
   }
 
   // =====================================================================
+  // WEATHER: showers come and go
+  // =====================================================================
+  function stepWeather() {
+    const s = S();
+    if (s.day === 1 && hour() < 7) return; // the arrival night stays rainy
+    if (G.raining && Math.random() < 0.25) { G.raining = false; s.weather = 'clear'; if (G.mapId === 'city') UI.toast('The rain stops.'); }
+    else if (!G.raining && Math.random() < 0.035) { G.raining = true; s.weather = 'rain'; s.flags.wetGround = 1; if (G.mapId === 'city') UI.toast('It starts to rain.'); }
+    // puddles dry out a few hours after the rain
+    if (!G.raining && s.flags.wetGround && Math.random() < 0.3) s.flags.wetGround = 0;
+  }
+
+  // =====================================================================
   // per-frame
   // =====================================================================
   const update0 = SIM.update;
@@ -286,7 +375,7 @@
       }
     }
     const m = Math.floor(absMin());
-    if (m !== lastMin) { lastMin = m; stepBuyers(); stepBus(); }
+    if (m !== lastMin) { lastMin = m; stepBuyers(); stepBus(); if (G.mapId === 'city') stepCamp(); if (m % 60 === 0) stepWeather(); }
   };
   window.EXTRAS = { makeBuyer, stepBuyers, refreshOffers, acceptGig };
   const tick0 = UI.tick;

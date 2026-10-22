@@ -1,6 +1,6 @@
 // Sound: synthesized effects, voice blips, rain/city ambience, and lo-fi / synthwave music.
 (function () {
-  const S = { ctx: null, vol: 0.75, mus: 0.5, theme: null, timer: null };
+  const S = { ctx: null, vol: 0.75, mus: 0.35, theme: null, timer: null };
   function ac() {
     if (!S.ctx) {
       try {
@@ -8,7 +8,7 @@
         S.master = S.ctx.createGain(); S.master.gain.value = S.vol; S.master.connect(S.ctx.destination);
         S.mbus = S.ctx.createGain(); S.mbus.gain.value = S.mus * 0.55;
         // music goes through a warm lowpass (tape) and a reverb
-        S.tape = S.ctx.createBiquadFilter(); S.tape.type = 'lowpass'; S.tape.frequency.value = 5200;
+        S.tape = S.ctx.createBiquadFilter(); S.tape.type = 'lowpass'; S.tape.frequency.value = 3200;
         S.mbus.connect(S.tape); S.tape.connect(S.ctx.destination);
         const conv = S.ctx.createConvolver(); const len = S.ctx.sampleRate * 2.6;
         const buf = S.ctx.createBuffer(2, len, S.ctx.sampleRate);
@@ -133,36 +133,36 @@
         if (s === 0) { // pad (detuned pair through lowpass)
           for (const n of type) for (const det of [-6, 6]) {
             const o = c.createOscillator(), g = c.createGain(), fl = c.createBiquadFilter();
-            o.type = th.dark ? 'sawtooth' : 'triangle'; o.frequency.value = semi(n + root - 12); o.detune.value = det;
-            fl.type = 'lowpass'; fl.frequency.value = th.dark ? 900 : 1500;
-            env(g, t, 0.4, beat * 15, 0.012 * vol); o.connect(fl); fl.connect(g); g.connect(out); o.start(t); o.stop(t + beat * 16.5);
+            o.type = th.dark ? 'triangle' : 'sine'; o.frequency.value = semi(n + root - 12); o.detune.value = det;
+            fl.type = 'lowpass'; fl.frequency.value = th.dark ? 700 : 1200;
+            env(g, t, 0.6, beat * 15, 0.011 * vol); o.connect(fl); fl.connect(g); g.connect(out); o.start(t); o.stop(t + beat * 16.5);
           }
         }
         // bass
         if (s === 0 || s === 6 || s === 10 || (th.drums === 'synth' && s % 4 === 0)) {
           const o = c.createOscillator(), g = c.createGain(), fl = c.createBiquadFilter();
-          o.type = th.drums === 'synth' ? 'sawtooth' : 'triangle'; o.frequency.value = semi(root - 24 + (s === 10 ? 7 : 0));
-          fl.type = 'lowpass'; fl.frequency.value = 500;
+          o.type = 'triangle'; o.frequency.value = semi(root - 24 + (s === 10 ? 7 : 0));
+          fl.type = 'lowpass'; fl.frequency.value = 380;
           env(g, t, 0.01, beat * 2.5, 0.12 * vol); o.connect(fl); fl.connect(g); g.connect(out); o.start(t); o.stop(t + beat * 3);
         }
         // arpeggio
-        if (th.arp && s % 2 === 0) { const n = type[(s / 2) % type.length]; const o = c.createOscillator(), g = c.createGain(); o.type = 'square'; o.frequency.value = semi(n + root + 12); env(g, t, 0.004, beat * 0.9, 0.012 * vol); o.connect(g); g.connect(out); o.start(t); o.stop(t + beat); }
+        if (th.arp && s % 2 === 0) { const n = type[(s / 2) % type.length]; const o = c.createOscillator(), g = c.createGain(); o.type = 'triangle'; o.frequency.value = semi(n + root + 12); env(g, t, 0.006, beat * 0.8, 0.008 * vol); o.connect(g); g.connect(out); o.start(t); o.stop(t + beat); }
         // lead melody
         const m = th.mel[s];
         if (m != null && bar % 2 === 1 - (step >= 64 ? 1 : 0)) {
           const o = c.createOscillator(), g = c.createGain(), fl = c.createBiquadFilter();
-          o.type = th.lead; o.frequency.value = semi(m + root); const vib = c.createOscillator(), vg = c.createGain(); vib.frequency.value = 5; vg.gain.value = 4; vib.connect(vg); vg.connect(o.detune); vib.start(t); vib.stop(t + beat * 3);
-          fl.type = 'lowpass'; fl.frequency.value = 2600;
-          env(g, t, 0.02, beat * 2.4, (th.lead === 'sawtooth' || th.lead === 'square' ? 0.022 : 0.04) * vol); o.connect(fl); fl.connect(g); g.connect(out); o.start(t); o.stop(t + beat * 3);
+          o.type = th.lead === 'sine' ? 'sine' : 'triangle'; o.frequency.value = semi(m + root);
+          fl.type = 'lowpass'; fl.frequency.value = 1800;
+          env(g, t, 0.03, beat * 2.2, 0.03 * vol); o.connect(fl); fl.connect(g); g.connect(out); o.start(t); o.stop(t + beat * 3);
         }
         // drums
         if (th.drums) {
           const kick = th.drums === 'synth' ? s % 4 === 0 : (s === 0 || s === 7 || s === 10);
-          if (kick) { const o = c.createOscillator(), g = c.createGain(); o.frequency.setValueAtTime(120, t); o.frequency.exponentialRampToValueAtTime(40, t + 0.12); env(g, t, 0.002, 0.16, 0.22 * vol); o.connect(g); g.connect(out); o.start(t); o.stop(t + 0.2); }
+          if (kick) { const o = c.createOscillator(), g = c.createGain(); o.frequency.setValueAtTime(120, t); o.frequency.exponentialRampToValueAtTime(40, t + 0.12); env(g, t, 0.002, 0.16, 0.15 * vol); o.connect(g); g.connect(out); o.start(t); o.stop(t + 0.2); }
           if (s % 8 === 4) { const src = c.createBufferSource(); src.buffer = noiseBuf(); const fl = c.createBiquadFilter(); fl.type = th.drums === 'brush' ? 'bandpass' : 'highpass'; fl.frequency.value = th.drums === 'brush' ? 3000 : 1600; const g = c.createGain(); env(g, t, 0.003, th.drums === 'brush' ? 0.2 : 0.14, (th.drums === 'brush' ? 0.06 : 0.1) * vol); src.connect(fl); fl.connect(g); g.connect(out); src.start(t, Math.random()); src.stop(t + 0.25); }
-          if (s % 2 === 1 || th.drums === 'synth') { const src = c.createBufferSource(); src.buffer = noiseBuf(); const fl = c.createBiquadFilter(); fl.type = 'highpass'; fl.frequency.value = 7500; const g = c.createGain(); env(g, t, 0.002, 0.03, (s % 4 === 2 ? 0.035 : 0.02) * vol); src.connect(fl); fl.connect(g); g.connect(out); src.start(t, Math.random()); src.stop(t + 0.05); }
+          if (s % 4 === 2) { const src = c.createBufferSource(); src.buffer = noiseBuf(); const fl = c.createBiquadFilter(); fl.type = 'highpass'; fl.frequency.value = 7500; const g = c.createGain(); env(g, t, 0.002, 0.03, (s % 4 === 2 ? 0.035 : 0.02) * vol); src.connect(fl); fl.connect(g); g.connect(out); src.start(t, Math.random()); src.stop(t + 0.05); }
           // vinyl crackle for lofi
-          if (th.drums === 'lofi' && Math.random() < 0.4) { const src = c.createBufferSource(); src.buffer = noiseBuf(); const fl = c.createBiquadFilter(); fl.type = 'highpass'; fl.frequency.value = 5000; const g = c.createGain(); env(g, t + Math.random() * beat, 0.001, 0.008, 0.03 * vol); src.connect(fl); fl.connect(g); g.connect(out); src.start(t, Math.random()); src.stop(t + 0.03); }
+          if (th.drums === 'lofi' && Math.random() < 0.12) { const src = c.createBufferSource(); src.buffer = noiseBuf(); const fl = c.createBiquadFilter(); fl.type = 'highpass'; fl.frequency.value = 5000; const g = c.createGain(); env(g, t + Math.random() * beat, 0.001, 0.008, 0.03 * vol); src.connect(fl); fl.connect(g); g.connect(out); src.start(t, Math.random()); src.stop(t + 0.03); }
         }
         next += beat; step++;
       }
@@ -189,13 +189,20 @@
       const rain = G.raining ? (out ? 0.16 : G.map.underground ? 0.0 : 0.05) : 0;
       S.rainGain.gain.setTargetAtTime(rain, t, 0.6);
       S.rainFilter.frequency.setTargetAtTime(out ? 2400 : 700, t, 0.3);
-      S.humGain.gain.setTargetAtTime(out ? 0.06 : G.map.underground ? 0.08 : 0.02, t, 0.8);
+      S.humGain.gain.setTargetAtTime(out ? 0.035 : G.map.underground ? 0.05 : 0.012, t, 0.8);
       // occasional far-off city sounds
-      if (out && Math.random() < 0.06) tone(300 + Math.random() * 200, 1.4, 'sawtooth', 0.006, 0, 1.6, S.abus);
-      if (out && G.night > 0.5 && Math.random() < 0.03) { tone(700, 0.4, 'sawtooth', 0.004, 0, 1.4, S.abus); tone(980, 0.4, 'sawtooth', 0.004, 0.4, 0.72, S.abus); }
+      if (out && Math.random() < 0.04) carPass();
       if (G.map.underground && Math.random() < 0.05) { noise(2.5, 0.05, 120, 0, 0.6, 'lowpass', S.abus); }
-      if (G.map.underground && Math.random() < 0.08) tone(1400 + Math.random() * 800, 0.02, 'square', 0.01, 0, 0, S.abus);
+      
     }, 500);
+  }
+  // a car going by somewhere: a soft swell of filtered noise
+  function carPass() {
+    const c = S.ctx, t = c.currentTime, d = 1.6 + Math.random() * 1.2;
+    const src = c.createBufferSource(); src.buffer = noiseBuf(); src.loop = true;
+    const f = c.createBiquadFilter(); f.type = 'lowpass'; f.frequency.setValueAtTime(300, t); f.frequency.linearRampToValueAtTime(700, t + d * 0.5); f.frequency.linearRampToValueAtTime(260, t + d);
+    const g = c.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(0.03, t + d * 0.5); g.gain.linearRampToValueAtTime(0.0001, t + d);
+    src.connect(f); f.connect(g); g.connect(S.abus); src.start(t, Math.random()); src.stop(t + d + 0.1);
   }
   S.ambience = function (map) {
     // music follows the map and the hour

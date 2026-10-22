@@ -1,5 +1,5 @@
 // Network first, so a new Vercel deploy shows up right away; the cache lets the game open offline.
-const CACHE = 'novacancy-v5';
+const CACHE = 'novacancy-v6';
 self.addEventListener('install', () => self.skipWaiting());
 self.addEventListener('activate', e => e.waitUntil(self.clients.claim()));
 self.addEventListener('fetch', e => {

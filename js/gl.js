@@ -157,10 +157,13 @@ void main(){
     }
     gloss = 0.8;
   } else if (id == 9.0) { // water
-    float w = sin(vW.x * 2.1 + uTime * 1.3) * cos(vW.z * 1.7 - uTime) * 0.5 + 0.5;
-    base = mix(base, base * 1.3 + vec3(0.02, 0.05, 0.08), w * 0.35);
-    if (hash(floor(vW.xz * 10.0) + floor(uTime * 2.0)) > 0.993) base += vec3(0.4);
-    wetK = 1.0; gloss = 0.9;
+    // rolling swell + banded highlights, kept blue (never darkened like wet asphalt)
+    float w = sin(vW.x * 1.3 + uTime * 0.9) * cos(vW.z * 1.1 - uTime * 0.7) * 0.5 + 0.5;
+    float w2 = sin((vW.x + vW.z) * 3.1 + uTime * 1.7) * 0.5 + 0.5;
+    base = mix(base * 0.8, base * 1.15 + vec3(0.02, 0.05, 0.09), w * 0.55);
+    if (w2 > 0.93 && fract(vW.z * 0.5 + w * 0.3) > 0.5) base += vec3(0.08, 0.12, 0.16);
+    if (hash(floor(vW.xz * 10.0) + floor(uTime * 2.0)) > 0.993) base += vec3(0.35);
+    wetK = 0.0; gloss = 0.45;
   } else if (id == 10.0) { // sidewalk slabs (1.0)
     vec2 c = floor(uv), f = fract(uv);
     base *= 0.9 + 0.16 * hash(c);

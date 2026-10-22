@@ -36,7 +36,19 @@
     couple: r => ({ top: pick(['#ff7ac0', '#9a3a5a', '#5aa6a0', '#e8e2d8'], r(1)), topStyle: pick(['dress', 'tee'], r(2)), hairStyle: pick(['long', 'pony', 'curly', 'bob'], r(3)) }),
     narc: r => ({ top: pick(['#5a5a64', '#4a4a5a'], r(1)), topStyle: 'jacket', inner: '#e8e2d8', bottom: '#2c2c34', shoes: '#c8a050', hairStyle: 'buzz', glasses: 'shades' }), // shiny shoes are the tell
     celeb: r => ({ top: pick(['#e8e2d8', '#c9a14a', '#18181e'], r(1)), topStyle: pick(['coat', 'suit', 'dress'], r(2)), glasses: 'shades', acc: ['gold', 'chain'], hairStyle: pick(['slick', 'long', 'bob'], r(3)), hair: pick(['#e8d08a', '#1e1a1a', '#e86aa0'], r(4)) }),
-    ped: r => ({ topStyle: pick(['tee', 'hoodie', 'jacket', 'coat', 'tee'], r(1)) }),
+    // everyday people: pick an archetype so the street isn't full of clones
+    ped: r => {
+      const a = r(9), size = 0.9 + r(8) * 0.22;
+      if (a < 0.16) return { size, top: pick(['#2c2c38', '#3a3a50', '#5a5a64', '#e8e2d8'], r(1)), topStyle: 'suit', inner: pick(['#c8443c', '#2f6a9a', '#e8c13c', '#e8e2d8'], r(2)), bottom: '#2c2c38', shoes: '#111', hairStyle: pick(['slick', 'short', 'bun', 'bob'], r(3)), acc: r(4) > 0.5 ? ['bag'] : [] };
+      if (a < 0.28) return { size, top: pick(['#e8833a', '#3a8a5a', '#ff7ac0', '#5aa6a0'], r(1)), topStyle: 'tee', bottom: '#2c2c34', shoes: pick(['#ecebe6', '#e8c13c'], r(2)), hairStyle: pick(['pony', 'buzz', 'short'], r(3)), hat: r(4) > 0.6 ? 'cap' : null, hatCol: '#e8e2d8', acc: ['earbuds'] };
+      if (a < 0.42) return { size: size * 0.96, hair: pick(['#c8c4c0', '#e8e4e0', '#9a9490'], r(1)), hairStyle: pick(['balding', 'short', 'bob', 'bun'], r(2)), top: pick(['#8a6a4a', '#6a5a7a', '#5a6a5a', '#9a7a6a'], r(3)), topStyle: pick(['cardigan', 'coat'], r(4)), glasses: r(5) > 0.4 ? 'round' : null, beard: r(6) > 0.7 ? 'hair' : null };
+      if (a < 0.58) return { size: size * 0.95, topStyle: pick(['hoodie', 'tee', 'jacket'], r(1)), top: pick(['#5a3a8a', '#2f6a9a', '#c8443c', '#18181e', '#e8c13c'], r(2)), hairStyle: pick(['messy', 'curly', 'long', 'mohawk', 'afro'], r(3)), hair: pick(['#1e1a1a', '#6a4426', '#e86aa0', '#5a3a8a', '#d9b46a'], r(4)), acc: ['backpack'] };
+      if (a < 0.68) return { size, top: '#e8833a', topStyle: 'vest', inner: '#5a5a64', hat: 'hardhat', hatCol: '#e8c13c', bottom: '#2a3a5a' };
+      if (a < 0.76) return { size, top: pick(['#5aa6a0', '#e8c13c', '#ff7ac0', '#e8e2d8'], r(1)), topStyle: pick(['tee', 'hawaii'], r(2)), hat: r(3) > 0.5 ? 'bucket' : null, hatCol: '#e8e2d8', glasses: r(4) > 0.5 ? 'shades' : null, acc: ['camera'] };
+      return { size, topStyle: pick(['tee', 'hoodie', 'jacket', 'coat', 'flannel', 'dress'], r(1)), hat: r(2) > 0.8 ? pick(['beanie', 'cap', 'bucket'], r(3)) : null, hatCol: pick(['#c8443c', '#2c2c38', '#e8c13c'], r(4)), glasses: r(5) > 0.8 ? 'shades' : null, acc: r(6) > 0.75 ? ['bag'] : [] };
+    },
+    // people living rough around the slums
+    homeless: r => ({ size: 0.92 + r(8) * 0.15, top: pick(['#5a4a3a', '#4a5a4a', '#5a4a5a', '#6a5a4a', '#3a3a44'], r(1)), topStyle: pick(['parka', 'coat', 'coat'], r(2)), inner: pick(['#7a6a5a', '#5a4a3a'], r(3)), bottom: pick(['#4a4038', '#3a3a3a', '#5a5048'], r(4)), shoes: '#3a2a20', hat: r(5) > 0.3 ? 'beanie' : null, hatCol: pick(['#6a3a3a', '#3a4a5a', '#5a5a3a'], r(6)), hairStyle: pick(['messy', 'long', 'messy'], r(7)), hair: pick(['#6a6a66', '#3a2a20', '#9a9490'], r(9)), beard: r(10) > 0.35 ? 'hair' : null }),
     worker: r => ({ top: '#e8833a', topStyle: 'vest', inner: '#5a5a64', hat: 'hardhat', hatCol: '#e8c13c', bottom: '#2a3a5a' }),
   };
   function randomLook(seed, type = 'ped') {
@@ -89,6 +101,8 @@
     }
     if (acc.has('chain')) t.box(0, 0.33, 0.106, 0.16, 0.025, 0.01, P.gold, { emit: 0.3 });
     if (acc.has('camera')) t.box(0.1, 0.18, 0.12, 0.1, 0.08, 0.05, '#222');
+    if (acc.has('backpack')) { t.box(0, 0.2, -0.16, 0.28, 0.3, 0.12, shade(L.top, 0.6), o); t.box(0, 0.12, -0.225, 0.2, 0.12, 0.02, shade(L.top, 0.5)); }
+    if (acc.has('bag')) { t.box(-0.21, 0.02, 0.0, 0.06, 0.18, 0.2, '#5a3a2a', o); t.box(0.0, 0.3, 0.108, 0.36, 0.025, 0.01, '#5a3a2a'); }
     if (acc.has('guitar')) { t.at(0, 0.18, -0.14, 0, 1, 0, 0.6); t.box(0, -0.25, 0, 0.18, 0.3, 0.06, '#8a4a2a'); t.box(0, 0.05, 0, 0.05, 0.4, 0.04, '#3a2a1a'); t.pop(); }
     if (acc.has('choker')) t.box(0, 0.42, 0.06, 0.18, 0.03, 0.08, '#111');
     parts.torso = t;
@@ -112,6 +126,7 @@
     h.box(0.075, 0.19, 0.162, 0.045, 0.06, 0.01, '#1a1418', { jit: 0 });
     h.box(0, 0.085, 0.162, 0.08, 0.02, 0.01, acc.has('lips') ? '#c83a4a' : shade(L.skin, 0.75), { jit: 0 });
     if (L.beard) { h.box(0, 0.05, 0.13, 0.32, 0.1, 0.06, L.beard, o); h.box(0, 0.13, 0.163, 0.16, 0.035, 0.01, L.beard); }
+    if (acc.has('earbuds')) for (const s2 of [-1, 1]) h.box(s2 * 0.165, 0.1, 0.02, 0.03, 0.03, 0.03, '#f2efe8', { emit: 0.2 });
     if (acc.has('earrings')) for (const s of [-1, 1]) h.box(s * 0.17, 0.1, 0.02, 0.025, 0.05, 0.025, P.gold, { emit: 0.4 });
     // glasses
     if (L.glasses === 'shades') h.box(0, 0.18, 0.165, 0.3, 0.07, 0.02, '#0e0e12', { jit: 0 });

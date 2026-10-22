@@ -188,6 +188,10 @@
     nopark: { build: (mb, o) => { mb.box(o.x, 0.14, o.z, 0.05, 1.8, 0.05, '#8a8e96'); mb.box(o.x + 0.03, 1.55, o.z, 0.02, 0.45, 0.32, '#e8e2d8'); mb.box(o.x + 0.045, 1.62, o.z, 0.01, 0.28, 0.24, '#c8443c'); } },
     oilstain: { build: (mb, o) => { mb.box(o.x, 0.025, o.z, 0.9, 0.005, 0.6, '#18161e', { jit: 0 }); mb.box(o.x + 0.3, 0.026, o.z + 0.2, 0.4, 0.005, 0.3, '#24202c', { jit: 0 }); } },
     shoppingcart: { build: (mb, o) => { mb.at(o.x, 0.04, o.z, o.rot || 0); mb.box(0, 0.35, 0, 0.5, 0.45, 0.7, '#9aa0a8', { mat: W(MT.metal, 0.6) }); mb.box(0, 0.8, -0.38, 0.5, 0.05, 0.05, '#c8443c'); for (const [dx, dz] of [[-0.2, -0.3], [0.2, -0.3], [-0.2, 0.3], [0.2, 0.3]]) mb.box(dx, 0, dz, 0.06, 0.1, 0.06, '#222'); mb.pop(); } },
+    // slum props
+    bedroll: { build: (mb, o) => { mb.at(o.x, 0.02, o.z, o.rot || 0); mb.box(0, 0, 0, 0.8, 0.05, 1.7, '#8a6a4a', { mat: W(MT.wood, 0.9) }); mb.box(0, 0.05, 0.2, 0.62, 0.12, 1.1, o.col || '#4a5a7a', { mat: W(MT.plain, 0.8) }); mb.box(0, 0.05, -0.6, 0.5, 0.14, 0.3, '#c8c0b0', { mat: W(MT.plain, 0.6) }); mb.pop(); }, foot: none, h: 0.3 },
+    shopcart: { build: (mb, o) => { mb.at(o.x, 0.04, o.z, o.rot || 0); for (const [x, z] of [[-0.25, -0.4], [0.25, -0.4], [-0.25, 0.4], [0.25, 0.4]]) mb.box(x, 0, z, 0.06, 0.08, 0.06, '#18181e'); mb.box(0, 0.12, 0, 0.56, 0.04, 0.9, '#8a8a92', { mat: W(MT.metal, 0.6) }); mb.box(-0.27, 0.16, 0, 0.03, 0.5, 0.9, '#a8a8b0', { mat: W(MT.metal, 0.5) }); mb.box(0.27, 0.16, 0, 0.03, 0.5, 0.9, '#a8a8b0', { mat: W(MT.metal, 0.5) }); mb.box(0, 0.16, 0.44, 0.56, 0.5, 0.03, '#a8a8b0', { mat: W(MT.metal, 0.5) }); mb.box(0, 0.16, -0.44, 0.56, 0.5, 0.03, '#a8a8b0', { mat: W(MT.metal, 0.5) }); mb.box(0, 0.66, 0.5, 0.5, 0.04, 0.04, '#c8443c'); mb.box(0, 0.2, 0, 0.48, 0.42, 0.8, '#3a3a44', { mat: W(MT.plain, 0.8) }); mb.box(0.08, 0.58, -0.1, 0.3, 0.16, 0.3, '#5a6a3a'); mb.pop(); }, foot: o => { if (RECTS) RECTS.push([o.x - 0.35, o.z - 0.5, 0.7, 1.0]); return []; }, h: 0.8 },
+    cardboard: { build: (mb, o) => { mb.at(o.x, 0.02, o.z, o.rot || 0); mb.box(0, 0, 0, 0.9, 0.6, 0.9, '#b8864a', { mat: W(MT.wood, 0.9) }); mb.box(0, 0.6, 0.1, 0.9, 0.04, 0.6, '#a8763a'); mb.box(0, 0.12, 0.46, 0.6, 0.4, 0.02, '#2a1e14'); mb.pop(); }, foot: o => { if (RECTS) RECTS.push([o.x - 0.45, o.z - 0.45, 0.9, 0.9]); return []; }, h: 0.7 },
     tent: { build: (mb, o) => { mb.at(o.x, 0.05, o.z, o.rot || 0); mb.quad([-0.8, 0, 0.7], [0.8, 0, 0.7], [0, 1.0, 0.7], [0, 1.0, 0.7], '#3a6a8a'); mb.quad([-0.8, 0, -0.7], [-0.8, 0, 0.7], [0, 1.0, 0.7], [0, 1.0, -0.7], '#3a6a8a', { mat: W(MT.carpet, 0.8) }); mb.quad([0.8, 0, 0.7], [0.8, 0, -0.7], [0, 1.0, -0.7], [0, 1.0, 0.7], '#2a5a7a', { mat: W(MT.carpet, 0.8) }); mb.pop(); }, foot: tileOf },
   };
 
@@ -212,13 +216,21 @@
   }
   function outerGround(mb, map) {
     const c = '#26242c';
-    mb.quad([-40, -0.02, map.h + 40], [map.w + 40, -0.02, map.h + 40], [map.w + 40, -0.02, -40], [-40, -0.02, -40], c, { mat: W(MT.asphalt, 0.6), jit: 0 });
+    const flat = (x0, z0, x1, z1) => mb.quad([x0, -0.02, z1], [x1, -0.02, z1], [x1, -0.02, z0], [x0, -0.02, z0], c, { mat: W(MT.asphalt, 0.6), jit: 0 });
+    // land around the map, leaving the harbour open so the water shows
+    const wx = map.waterX != null ? map.waterX : map.w, wz = map.waterZ != null ? map.waterZ : 44;
+    flat(-40, -40, map.w + 40, 0);          // north
+    flat(-40, 0, 0, map.h + 40);            // west
+    flat(0, map.h, wx, map.h + 40);         // south
+    flat(map.w, 0, map.w + 40, wz);         // east, above the bay
     // Harbor St continues west; Sunset Blvd continues north and south
     mb.quad([-40, 0.005, 52], [0, 0.005, 52], [0, 0.005, 46], [-40, 0.005, 46], P.asphalt, { mat: W(MT.asphalt, 0.6), jit: 0 });
     mb.quad([26, 0.005, 0], [32, 0.005, 0], [32, 0.005, -40], [26, 0.005, -40], P.asphalt, { mat: W(MT.asphalt, 0.6), jit: 0 });
     mb.quad([26, 0.005, map.h + 40], [32, 0.005, map.h + 40], [32, 0.005, map.h], [26, 0.005, map.h], P.asphalt, { mat: W(MT.asphalt, 0.6), jit: 0 });
     // the bay beyond the docks
-    mb.quad([map.w, -0.9, map.h + 40], [map.w + 40, -0.9, map.h + 40], [map.w + 40, -0.9, 44], [map.w, -0.9, 44], '#1f3a4f', { mat: W(MT.water, 0), jit: 0 });
+    const sea = (x0, z0, x1, z1) => mb.quad([x0, -0.9, z1], [x1, -0.9, z1], [x1, -0.9, z0], [x0, -0.9, z0], C.GROUND.water.c, { mat: W(MT.water, 0), jit: 0 });
+    sea(map.w, wz, map.w + 40, map.h + 40);
+    sea(wx, map.h, map.w, map.h + 40);
   }
   function roadPaint(mb, map) {
     // Sunset Blvd: double yellow centre, white lane dashes; Harbor St same
@@ -229,8 +241,10 @@
     C.stripe(mb, -40, 48.93, 25, 48.93, P.lane, 0.07); C.stripe(mb, -40, 49.07, 25, 49.07, P.lane, 0.07);
     C.stripe(mb, 33, 48.93, 50, 48.93, P.lane, 0.07); C.stripe(mb, 33, 49.07, 50, 49.07, P.lane, 0.07);
     C.laneDash(mb, -40, 47.5, 25, 47.5, P.laneW, 0.08); C.laneDash(mb, 33, 50.5, 50, 50.5, P.laneW, 0.08);
-    C.crosswalk(mb, 26, 44.3, 32, 45.7, true); C.crosswalk(mb, 26, 52.3, 32, 53.7, true);
-    C.crosswalk(mb, 24.3, 46, 25.7, 52, false); C.crosswalk(mb, 32.3, 46, 33.7, 52, false);
+    for (const c of map.crosswalks || []) {
+      if (c.across === 'z') C.crosswalk(mb, c.x0, c.z0 + 0.3, c.x1 + 1, c.z1 + 0.7, true);
+      else C.crosswalk(mb, c.x0 + 0.3, c.z0, c.x1 + 0.7, c.z1 + 1, false);
+    }
     C.stripe(mb, 26, 45.9, 29, 45.9, P.laneW, 0.18); C.stripe(mb, 29, 52.1, 32, 52.1, P.laneW, 0.18);
   }
 

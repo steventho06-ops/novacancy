@@ -241,8 +241,9 @@
     return moved;
   }
   G.moveEnt = moveEnt;
-  function astar(sx, sz, tx, tz, maxN = 6000) {
+  function astar(sx, sz, tx, tz, maxN = 6000, filter) {
     if (!walkableTile(tx, tz)) return null;
+    if (filter && !filter(tx, tz)) return null;
     const W = G.map.w, key = (x, z) => z * W + x;
     const open = [[sx, sz, 0, Math.hypot(tx - sx, tz - sz)]];
     const came = new Map(), gs = new Map([[key(sx, sz), 0]]);
@@ -257,8 +258,8 @@
       }
       for (const [dx, dz] of [[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [1, -1], [-1, 1], [-1, -1]]) {
         const nx = x + dx, nz = z + dz;
-        if (!walkableTile(nx, nz)) continue;
-        if (dx && dz && (!walkableTile(x + dx, z) || !walkableTile(x, z + dz))) continue;
+        if (!walkableTile(nx, nz) || (filter && !filter(nx, nz))) continue;
+        if (dx && dz && (!walkableTile(x + dx, z) || !walkableTile(x, z + dz) || (filter && (!filter(x + dx, z) || !filter(x, z + dz))))) continue;
         if (!edgeOk(x, z, nx, nz)) continue;
         const g = gs.get(key(x, z)) + (dx && dz ? 1.414 : 1);
         const nk = key(nx, nz);
@@ -277,21 +278,22 @@
     if (v === undefined) { const a = standPt(x, z), b = standPt(nx, nz); v = lineFree(a[0], a[1], b[0], b[1]); fp.edges.set(k, v); }
     return v;
   }
-  function lineFree(x0, z0, x1, z1) {
+  function lineFree(x0, z0, x1, z1, filter) {
     const n = Math.ceil(Math.hypot(x1 - x0, z1 - z0) * 4);
-    for (let i = 0; i <= n; i++) { const t = i / n; if (!freeAt(x0 + (x1 - x0) * t, z0 + (z1 - z0) * t, 0.2)) return false; }
+    for (let i = 0; i <= n; i++) { const t = i / n, x = x0 + (x1 - x0) * t, z = z0 + (z1 - z0) * t; if (!freeAt(x, z, 0.2)) return false; if (filter && !filter(Math.floor(x), Math.floor(z))) return false; }
     return true;
   }
   function pathTo(e, tx, tz) {
     const s = walkableTile(Math.floor(e.x), Math.floor(e.z)) ? [Math.floor(e.x), Math.floor(e.z)] : (nearestWalkable(e.x, e.z) || [e.x, e.z]).map(Math.floor);
-    const raw = astar(s[0], s[1], Math.floor(tx), Math.floor(tz));
+    const f = e.walkFilter;
+    const raw = astar(s[0], s[1], Math.floor(tx), Math.floor(tz), 6000, f);
     if (!raw) return false;
     const pts = raw.map(([x, z]) => standPt(x, z));
     if (freeAt(tx, tz, 0.2)) pts[pts.length - 1] = [tx, tz];
     const out = []; let cx = e.x, cz = e.z, i = 0;
     while (i < pts.length) {
       let j = Math.min(pts.length - 1, i + 24);
-      while (j > i && !lineFree(cx, cz, pts[j][0], pts[j][1])) j--;
+      while (j > i && !lineFree(cx, cz, pts[j][0], pts[j][1], f)) j--;
       out.push(pts[j]); cx = pts[j][0]; cz = pts[j][1]; i = j + 1;
     }
     e.path = out;
@@ -362,6 +364,8 @@
   }
   G.walkAgent = walkAgent;
   function stepAgent(a, dt) {
+    // waiting at the curb for traffic
+    if (a.gate && a.path && a.path.length && !a.gate(a)) { a.speed = lerp(a.speed, 0, 1 - Math.exp(-dt * 10)); a.walk += dt * 10 * a.speed; return; }
     if (a.path && a.path.length) {
       const [tx, tz] = a.path[0];
       const dx = tx - a.x, dz = tz - a.z, d = Math.hypot(dx, dz);

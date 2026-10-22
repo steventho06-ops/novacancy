@@ -312,7 +312,7 @@
     let h = '';
     if (s.tier <= 3) {
       h += `<div class="roomgrid">${s.rooms.slice(0, n).map((r, k) => { const g = SIM.guestInRoom(k); return `<div class="rm ${r.state}"><b>${k + 1}</b>${r.state === 'occupied' ? esc(g ? g.name : 'guest') + (r.request ? ' <span class="tag want">$</span>' : '') : r.state}</div>`; }).join('')}</div>`;
-      h += `<p style="color:var(--dim);font-size:11px;margin:8px 0">Clean rooms take guests. Dirty rooms need a Cleaning Kit. Wrecked rooms need a Toolkit first. Yellow $ = a guest request: knock on their door.</p>`;
+      h += `<p style="color:var(--dim);font-size:13.5px;margin:8px 0">Clean rooms take guests. Dirty rooms need a Cleaning Kit. Wrecked rooms need a Toolkit first. Yellow $ = a guest request: knock on their door.</p>`;
     } else h += `<div class="card"><h4>OCCUPANCY</h4><p>${Math.round((s.flags.occupancy || 0.5) * 100)}% of ${D.TIER[s.tier].rooms} rooms. Staff handle the rooms; VIPs still want to meet the owner at the desk.</p></div>`;
     const staff = Object.keys(D.STAFF).filter(k => s.staff[k]).map(k => D.STAFF[k].name + (k === 'clerk' && s.flags.rayClerk ? ' (Ray, free)' : ` ($${D.STAFF[k].wage}/day)`));
     h += `<div class="card"><h4>STAFF</h4><p>${staff.length ? staff.map(esc).join('<br>') : 'Just you. Hire help on the plans board in the office.'}</p></div>`;
@@ -324,7 +324,7 @@
   APPS.bag = function (el) {
     const s = S();
     const entries = Object.entries(s.inv).filter(([, n]) => n > 0);
-    el.innerHTML = `<p style="color:var(--dim);font-size:11px;margin:0 0 8px">Carrying ${SIM.carried()}/${SIM.capacity()} · <span class="hot">red = contraband</span></p>` + (entries.length ? entries.map(([k, n]) => {
+    el.innerHTML = `<p style="color:var(--dim);font-size:13.5px;margin:0 0 8px">Carrying ${SIM.carried()}/${SIM.capacity()} · <span class="hot">red = contraband</span></p>` + (entries.length ? entries.map(([k, n]) => {
       const d = I[k] || { name: k, desc: '' };
       const acts = [];
       if (d.read) acts.push(`<button type="button" class="btn small ghost" data-read="${k}">Read</button>`);
@@ -374,8 +374,8 @@
     <div class="savecode"><b>Move your save</b><small>Copy this code, then paste it in Settings on the home-screen app or another phone.</small>
       <div style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" class="btn ghost" id="sCopy">Copy save code</button><button type="button" class="btn ghost" id="sPasteBtn">Load a save code</button></div>
       <div id="sPasteBox" hidden><textarea id="sCode" rows="2" placeholder="Paste a code that starts with NV1." aria-label="Save code"></textarea><button type="button" class="btn" id="sLoad">Load this save</button></div></div>
-    <p style="color:var(--dim);font-size:11px;margin-top:14px">Tap to walk, drag to steer (drag far to run). Pinch or scroll to zoom. Keyboard: WASD, Shift to run, E to use, P for phone.</p>
-    <p style="color:var(--dim);font-size:11px">For true fullscreen on iPhone: Share → Add to Home Screen, then turn your phone sideways.</p>`;
+    <p style="color:var(--dim);font-size:13.5px;margin-top:14px">Tap to walk, drag to steer (drag far to run). Pinch or scroll to zoom. Keyboard: WASD, Shift to run, E to use, P for phone.</p>
+    <p style="color:var(--dim);font-size:13.5px">For true fullscreen on iPhone: Share → Add to Home Screen, then turn your phone sideways.</p>`;
     el.querySelector('#sVol').oninput = e => { SFX.setVol(+e.target.value); store('sfx', e.target.value); };
     el.querySelector('#sMus').oninput = e => { SFX.setMusic(+e.target.value); store('mus', e.target.value); };
     el.querySelectorAll('[data-g]').forEach(b => tap(b, () => { store('gfx', b.dataset.g); G.save(); location.reload(); }));
@@ -559,7 +559,7 @@
   };
   UI.lockGame = function (pins = 3) {
     return new Promise(res => {
-      const g = gameShell(`<h3>Lockpicking</h3><p>Set each pin when the pick is in the green.</p><div class="lock">${'<span></span>'.repeat(pins)}</div><div class="track"><div class="zone"></div><div class="needle"></div></div><button type="button" class="btn">SET PIN</button><p style="margin-top:8px;font-size:11px">Two slips and the pick snaps.</p>`);
+      const g = gameShell(`<h3>Lockpicking</h3><p>Set each pin when the pick is in the green.</p><div class="lock">${'<span></span>'.repeat(pins)}</div><div class="track"><div class="zone"></div><div class="needle"></div></div><button type="button" class="btn">SET PIN</button><p style="margin-top:8px;font-size:13.5px">Two slips and the pick snaps.</p>`);
       const pinEls = g.querySelectorAll('.lock span'), zEl = g.querySelector('.zone'), nEl = g.querySelector('.needle');
       let k = 0, fails = 0, t0 = performance.now(), sp = 1.1, zx = 0, zw = 0.18, raf;
       const place = () => { zx = 0.1 + Math.random() * 0.7; zEl.style.left = zx * 100 + '%'; zEl.style.width = zw * 100 + '%'; pinEls.forEach((p, i) => p.classList.toggle('cur', i === k)); };
