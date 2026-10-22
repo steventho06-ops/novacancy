@@ -176,7 +176,7 @@
     const s = S(); if (!s.flags.metSable) return; // they show up once you know the Underline
     const now = absMin();
     for (const a of G.agents) if (a.buyer && now > a.buyer.until) { a.buyer = null; a.icon = null; }
-    if (G.mapId !== 'city') return;
+    if (!G.map || !G.map.outdoor) return;
     if (!s.nextBuyer) s.nextBuyer = now + 30;
     if (now < s.nextBuyer) return;
     s.nextBuyer = now + rnd(45, 110);

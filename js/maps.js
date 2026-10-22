@@ -77,6 +77,9 @@
       { id: 'barIn', x: 45, z: 43, to: 'bar', tx: 4.5, tz: 6.4, dir: 'up', door: true },
       { id: 'warehouseIn', x: 41, z: 64, to: 'warehouse', tx: 6.0, tz: 7.4, dir: 'up', door: true, need: 'warehouseOpen' },
       { id: 'trailerIn', x: 37, z: 31, to: 'trailer', tx: 2.5, tz: 3.4, dir: 'up', door: true, need: 'trailerOpen' },
+      // Sunset Blvd runs north into Downtown
+      { id: 'toDowntown', x: 24, z: 0, w: 2, h: 1, to: 'downtown', tx: 24.9, tz: 58.2, dir: 'up' },
+      { id: 'toDowntown2', x: 32, z: 0, w: 2, h: 1, to: 'downtown', tx: 33, tz: 58.2, dir: 'up' },
     ];
     // static props (merged) and interactive objects (with ids)
     const O = m.objects = [];
@@ -97,6 +100,7 @@
     O.push({ k: 'parking', x0: 4, x1: 23, z: 17.2, n: 9 });
     O.push({ k: 'parking', x0: 14, x1: 16, z: 31, n: 0 });
     O.push({ k: 'busstop', id: 'busstop', x: 24.9, z: 40, rot: Math.PI / 2 });
+    O.push({ k: 'taxistand', id: 'taxilt', x: 24.6, z: 43.4 });
     O.push({ k: 'newsbox', id: 'news', x: 24.6, z: 36.4, rot: Math.PI / 2 });
     O.push({ k: 'hydrant', x: 24.7, z: 33 }, { k: 'hydrant', x: 33.3, z: 60 }, { k: 'hydrant', x: 12, z: 53.4 });
     O.push({ k: 'planter', x: 24.8, z: 27, kind: 'palm' }, { k: 'planter', x: 24.8, z: 20, kind: 'palm' }, { k: 'planter', x: 24.8, z: 12, kind: 'palm' });
@@ -119,7 +123,7 @@
     O.push({ k: 'crane', x: 50, z: 22, rot: -2.4 });
     O.push({ k: 'trailer', id: 'trailer', x: 37.8, z: 29.4 });
     O.push({ k: 'sitesign', x: 34.6, z: 28.5, text: 'VANCE HOLDINGS' });
-    for (let k = 0; k < 4; k++) O.push({ k: 'cone', x: 36.5 + k * 0.8, z: 32.6 });
+    for (let k = 0; k < 4; k++) O.push({ k: 'cone', x: 41.5 + k * 0.9, z: 32.8 });
     O.push({ k: 'barrier', x: 34.0, z: 21.5, rot: Math.PI / 2 });
     O.push({ k: 'pallet', x: 45, z: 27 }, { k: 'pallet', x: 46.2, z: 27.2 }, { k: 'crates', x: 44, z: 30, n: 3 });
     O.push({ k: 'portaloo', x: 51.5, z: 31.5 });
@@ -141,6 +145,7 @@
     O.push({ k: 'crates', x: 47, z: 57, n: 4 }, { k: 'pallet', x: 47, z: 62 }, { k: 'forklift', x: 44.5, z: 66, rot: 0.4 });
     O.push({ k: 'lamp', x: 49.5, z: 58, rot: -Math.PI / 2 }, { k: 'lamp', x: 49.5, z: 68, rot: -Math.PI / 2 }, { k: 'lamp', x: 53, z: 45, rot: 0 });
     O.push({ k: 'trashbags', x: 34.8, z: 62 });
+    O.push({ k: 'npcspot', id: 'foreman', x: 46.4, z: 59.5 });
     // street furniture near shops
     O.push({ k: 'bench', x: 25, z: 66, rot: Math.PI / 2 }, { k: 'trashcan', x: 25, z: 61 }, { k: 'newsbox', x: 25, z: 69.4, rot: Math.PI / 2, col: '#e8c13c' });
     O.push({ k: 'manhole', x: 29, z: 30 }, { k: 'manhole', x: 20, z: 49 }, { k: 'manhole', x: 29, z: 63 });

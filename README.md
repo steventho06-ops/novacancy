@@ -34,6 +34,16 @@ Saves live on the phone itself, so deleting the home-screen app or clearing Safa
 
 Phone → Settings → **Night** switches between Dark, Normal and Bright nights if it's hard to see after dark.
 
+## Downtown
+
+Walk north up Sunset Blvd, ride the bus from the stop by the motel ($2), or take a cab ($12). Downtown has:
+
+- **Aurora Tower**: buy the penthouse ($18,000) from the concierge. Sleep, stash your goods, soak in the hot tub (cools your heat), change outfits.
+- **First Harbor Bank**: deposit cash (1% interest a night, safe from cops and raids). ATMs on the street.
+- **Lucky 7 Casino**: blackjack and slots.
+- **Daily Grind** (coffee), **Silk & Steel** (outfits), **Central Park** (chess with Old Man Ito, hot dogs, a busker, the fountain).
+- The Red Line from Grand Station back to Sunset Station in Lowtown.
+
 ## Things to do between guests
 
 - **Gigs** (Phone → Gigs): courier jobs around Lowtown. Pick up a parcel, follow the orange arrow, beat the clock. Fast deliveries tip 30%. Late-night jobs are shady and pay more, but the parcel counts as hot cargo.

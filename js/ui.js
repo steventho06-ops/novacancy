@@ -184,7 +184,7 @@
   function portrait(who) {
     if (!who) return null;
     if (who === 'guest') return PORTRAITS.get(st.guestKey || 'guest', st.guestLook || CHARS.randomLook(1));
-    if (who === 'player') return PORTRAITS.get('player', CHARS.CAST.player);
+    if (who === 'player') return PORTRAITS.get(G.playerKey ? G.playerKey() : 'player', G.playerLook ? G.playerLook() : CHARS.CAST.player);
     const look = CHARS.CAST[who] || (G.agent(who) && G.agent(who).look) || CHARS.CAST.cop;
     return PORTRAITS.get(who, look);
   }
@@ -347,19 +347,24 @@
     }
   }
   APPS.map = function (el) {
-    el.innerHTML = `<canvas class="minimap" id="mm" width="58" height="78"></canvas><div class="legend"><span><i style="background:#ff4fa3"></i>You</span><span><i style="background:#ffd84a"></i>Objective</span><span><i style="background:#3ff0ff"></i>Starlite</span><span><i style="background:#b44bff"></i>Underline</span>${SIM.count('scanner') ? '<span><i style="background:#4f7bff"></i>Cops</span>' : ''}</div>
-      <div class="card" style="margin-top:8px"><p>Pawn, Mart and Diner: south on Sunset. Blue Note bar and laundromat: north side of Harbor St. Docks: east end of Harbor St.</p></div>`;
+    // both districts: Downtown sits directly north of Lowtown (Sunset Blvd becomes Grand Ave)
+    const dt = MAPS.downtown(), lt = MAPS.city(), OFF = dt.h + 1, W = Math.max(dt.w, lt.w);
+    el.innerHTML = `<canvas class="minimap" id="mm" width="${W}" height="${OFF + lt.h}"></canvas><div class="legend"><span><i style="background:#ff4fa3"></i>You</span><span><i style="background:#ffd84a"></i>Objective</span><span><i style="background:#3ff0ff"></i>Starlite</span><span><i style="background:#ffb43a"></i>Gig</span></div>
+      <div class="card" style="margin-top:8px"><h4>DOWNTOWN (north)</h4><p>Aurora Tower (penthouse), First Harbor Bank, Lucky 7 Casino, Daily Grind cafe, Silk &amp; Steel, Central Park, City Hall, Community College. Bus, taxi or walk north up Sunset.</p></div>
+      <div class="card"><h4>LOWTOWN (south)</h4><p>The Starlite, the Underline (metro plaza), Pawn, Mart and Diner south on Sunset, Blue Note and laundromat on Harbor St, docks to the east.</p></div>`;
     const c = el.querySelector('#mm'), x = c.getContext('2d');
-    const m = MAPS.city();
-    const col = { road: '#2a2838', walk: '#4a4658', lot: '#33303f', grass: '#2f4a2a', plaza: '#4f4a5c', dirt: '#4a3c2c', gravel: '#3c3830', water: '#16304a', pier: '#5a4430', pooldeck: '#6a6a7a', bldg: '#7a6a8a' };
-    for (let j = 0; j < m.h; j++) for (let i = 0; i < m.w; i++) { x.fillStyle = col[m.tile(i, j)] || '#333'; x.fillRect(i, j, 1, 1); }
-    x.fillStyle = '#3ff0ff'; x.fillRect(4, 10, 18, 7); x.fillRect(17, 31, 6, 6);
-    x.fillStyle = '#b44bff'; x.fillRect(9, 2, 3, 5);
+    const col = { road: '#2a2838', walk: '#4a4658', lot: '#33303f', grass: '#2f4a2a', plaza: '#4f4a5c', dirt: '#4a3c2c', gravel: '#3c3830', water: '#1f5582', pier: '#5a4430', pooldeck: '#6a6a7a', bldg: '#7a6a8a', void: '#1f5582' };
+    const paint = (m, oy) => { for (let j = 0; j < m.h; j++) for (let i = 0; i < m.w; i++) { x.fillStyle = col[m.tile(i, j)] || '#333'; x.fillRect(i, j + oy, 1, 1); } };
+    paint(dt, 0); paint(lt, OFF);
+    x.fillStyle = '#3ff0ff'; x.fillRect(4, 10 + OFF, 18, 7); x.fillRect(17, 31 + OFF, 6, 6);
+    x.fillStyle = '#b44bff'; x.fillRect(9, 2 + OFF, 3, 5);
+    x.fillStyle = '#9fd8ff'; x.fillRect(36, 3, 10, 11);
     const dot = (px, pz, c2, r = 2) => { x.fillStyle = c2; x.fillRect(Math.round(px) - (r >> 1), Math.round(pz) - (r >> 1), r, r); };
-    if (SIM.count('scanner') && G.mapId === 'city') for (const a of G.agents) if (a.kind === 'cop') dot(a.x, a.z, '#4f7bff');
+    const oy = G.mapId === 'downtown' ? 0 : G.mapId === 'city' ? OFF : null;
+    if (oy != null && SIM.count('scanner')) for (const a of G.agents) if (a.kind === 'cop') dot(a.x, a.z + oy, '#4f7bff');
     const hint = STORY.hints().map(h => { const e = G.mapId === 'city' && G.scene.byId[h]; return e ? e.o : null; }).find(Boolean);
-    if (hint && hint.x != null) dot(hint.x, hint.z, '#ffd84a', 3);
-    if (G.mapId === 'city') dot(G.player.x, G.player.z, '#ff4fa3', 3);
+    if (hint && hint.x != null) dot(hint.x, hint.z + OFF, '#ffd84a', 3);
+    if (oy != null) dot(G.player.x, G.player.z + oy, '#ff4fa3', 3);
   };
   APPS.settings = function (el) {
     el.innerHTML = `<div class="opts">

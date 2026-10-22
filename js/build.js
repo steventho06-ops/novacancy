@@ -209,7 +209,7 @@
     const add = (x, z, w, d, fl, seed, face) => C.building(mb, null, { x, z, w, d, floors: fl, seed, face: face || 's', lit: 0.45, wear: 0.6, roofProps: true, fire: R(seed, 1, 1) > 0.6 });
     // north edge: tall
     let x = -6;
-    while (x < map.w + 6) { const w = 5 + Math.floor(R(x, 3, 1) * 5); add(x, -9, w, 8, 5 + Math.floor(R(x, 4, 1) * 6), x * 3 + 1); x += w + 0.2; }
+    while (x < map.w + 6) { const w = 5 + Math.floor(R(x, 3, 1) * 5); if (x + w > 23 && x < 35) { x = 35; continue; } add(x, -9, w, 8, 5 + Math.floor(R(x, 4, 1) * 6), x * 3 + 1); x += w + 0.2; }
     // west edge: tall
     let z = 0;
     while (z < map.h) { const d = 5 + Math.floor(R(z, 5, 1) * 4); if (!(z > 44 && z < 52)) add(-9, z, 8, d, 4 + Math.floor(R(z, 6, 1) * 6), z * 5 + 7, 'e'); z += d + 0.2; }
@@ -262,13 +262,16 @@
     const lights = [];
     // ground
     if (map.outdoor) {
-      const g = new MB(); C.ground(map, g); roadPaint(g, map); outerGround(g, map);
+      const g = new MB(); C.ground(map, g);
+      if (map.paint) map.paint(g, C, P); else roadPaint(g, map);
+      if (map.outer) map.outer(g, C, P); else outerGround(g, map);
       statics.push({ mb: g, whole: true });
-      const sky = new MB(); skyline(sky, map); occ.push({ mb: sky, box: [-12, 0, -12, map.w + 6, 30, map.h], id: 'skyline', noFade: true });
+      const sky = new MB(); if (map.skyline) map.skyline(sky, C, P); else skyline(sky, map);
+      occ.push({ mb: sky, box: [-12, 0, -12, map.w + 6, 30, map.h], id: 'skyline', noFade: true });
       // district buildings
       for (const b of map.buildings || []) {
         const mb = new MB();
-        const H = C.building(mb, null, Object.assign({ seed: b.x * 31 + b.z * 17 }, b));
+        const H = b.tower ? DT.tower(mb, Object.assign({ seed: b.x * 31 + b.z * 17 }, b)) : C.building(mb, null, Object.assign({ seed: b.x * 31 + b.z * 17 }, b));
         occ.push({ mb, box: [b.x - 0.5, 0, b.z - 0.5, b.x + b.w + 1.2, H + 3, b.z + b.d + 1.2], id: b.id });
         if (b.shop) {
           const front = b.face === 'e' ? { x: b.x + b.w + 1.2, z: b.z + b.d / 2 } : { x: b.x + b.w / 2, z: b.z + b.d + 1.2 };
@@ -289,17 +292,20 @@
       const k = K[o.k];
       if (!k) { console.warn('unknown kind', o.k); continue; }
       const isDyn = o.id != null || k.dyn;
+      let built, a0;
       if (isDyn) {
         const mb = new MB(); k.build(mb, o, ctx);
-        dyn.push({ o, k, mb });
+        dyn.push({ o, k, mb }); built = mb; a0 = 0;
       } else if (k.occ) {
         const mb = new MB(); k.build(mb, o, ctx);
-        occ.push({ mb, box: null, id: o.k });
+        occ.push({ mb, box: null, id: o.k }); built = mb; a0 = 0;
       } else {
         const ch = map.outdoor ? chunk(o.x != null ? o.x : o.x0, o.z != null ? o.z : o.z0) : chunk(0, 0);
-        k.build(ch.mb, o, ctx);
+        a0 = ch.mb.a.length; k.build(ch.mb, o, ctx); built = ch.mb;
       }
-      if (k.foot) {
+      // hitbox traced from the object's own geometry, so what you see is what you bump into
+      if (!AUTO_SKIP.has(o.k) && !k.wall && !o.walkThrough) autoFoot(built.a, a0, built.a.length);
+      else if (k.foot) {
         const n0 = RECTS.length, tiles = k.foot(o, ctx);
         // footprints given as raw tile lists become full-tile rectangles
         if (RECTS.length === n0) for (const [x, z] of tiles) RECTS.push([x, z, 1, 1]);
@@ -311,6 +317,59 @@
     for (const c of Object.values(chunks)) statics.push({ mb: c.mb });
     return { statics, occ, dyn, fp, lights };
   }
+  // ---------------- hitboxes from geometry ----------------
+  // Everything at body height (between ankle and head) blocks. Each triangle is rasterised onto
+  // a fine grid seen from above; vertical faces count as their edge. Cells merge into rectangles.
+  const AUTO_SKIP = new Set(['motel', 'moteloffice', 'roomdoor', 'officedoor', 'npcspot', 'pool', 'mess', 'hole', 'wiring', 'bedroll', 'rug', 'oilstain', 'manhole', 'parking', 'court', 'tracks', 'metrostairs', 'billboard', 'tube', 'neonstrip', 'ceilfan', 'chandelier', 'window', 'ac', 'nets', 'skyline']);
+  const CELL = 0.2, Y0 = 0.24, Y1 = 1.7;
+  function autoFoot(a, s, e) {
+    if (e <= s) return;
+    const cells = new Set();
+    const mark = (x, z) => cells.add(Math.floor(x / CELL) + ',' + Math.floor(z / CELL));
+    for (let i = s; i + 35 < e; i += 36) {
+      const ax = a[i], ay = a[i + 1], az = a[i + 2], bx = a[i + 12], by = a[i + 13], bz = a[i + 14], cx = a[i + 24], cy = a[i + 25], cz = a[i + 26];
+      const lo = Math.min(ay, by, cy), hi = Math.max(ay, by, cy);
+      if (hi < Y0 || lo > Y1) continue;
+      const area = (bx - ax) * (cz - az) - (cx - ax) * (bz - az);
+      if (Math.abs(area) < 1e-4) {
+        // a wall seen edge-on: walk its longest edge
+        let px = ax, pz = az, qx = bx, qz = bz;
+        const d1 = (bx - ax) ** 2 + (bz - az) ** 2, d2 = (cx - ax) ** 2 + (cz - az) ** 2, d3 = (cx - bx) ** 2 + (cz - bz) ** 2;
+        if (d2 >= d1 && d2 >= d3) { qx = cx; qz = cz; } else if (d3 >= d1 && d3 >= d2) { px = bx; pz = bz; qx = cx; qz = cz; }
+        const n = Math.max(1, Math.ceil(Math.hypot(qx - px, qz - pz) / (CELL * 0.5)));
+        for (let k = 0; k <= n; k++) mark(px + (qx - px) * k / n, pz + (qz - pz) * k / n);
+        continue;
+      }
+      // horizontal surfaces only count if they sit at body height (a table top, a bench seat)
+      if (lo < Y0 && hi < Y0 + 0.05) continue;
+      const x0 = Math.min(ax, bx, cx), x1 = Math.max(ax, bx, cx), z0 = Math.min(az, bz, cz), z1 = Math.max(az, bz, cz);
+      for (let gx = Math.floor(x0 / CELL); gx * CELL <= x1; gx++) for (let gz = Math.floor(z0 / CELL); gz * CELL <= z1; gz++) {
+        const px = (gx + 0.5) * CELL, pz = (gz + 0.5) * CELL;
+        const w0 = (bx - ax) * (pz - az) - (bz - az) * (px - ax), w1 = (cx - bx) * (pz - bz) - (cz - bz) * (px - bx), w2 = (ax - cx) * (pz - cz) - (az - cz) * (px - cx);
+        if ((w0 >= 0 && w1 >= 0 && w2 >= 0) || (w0 <= 0 && w1 <= 0 && w2 <= 0)) cells.add(gx + ',' + gz);
+      }
+    }
+    if (!cells.size) return;
+    // rows of cells -> runs -> rectangles
+    const rows = new Map();
+    for (const c of cells) { const [x, z] = c.split(',').map(Number); if (!rows.has(z)) rows.set(z, []); rows.get(z).push(x); }
+    const open = new Map(); // "x0,x1" -> rect
+    const zs = [...rows.keys()].sort((p, q) => p - q);
+    let prevZ = null;
+    for (const z of zs) {
+      const xs = rows.get(z).sort((p, q) => p - q); const runs = [];
+      for (let i = 0; i < xs.length;) { let j = i; while (j + 1 < xs.length && xs[j + 1] === xs[j] + 1) j++; runs.push([xs[i], xs[j]]); i = j + 1; }
+      const next = new Map();
+      for (const [x0, x1] of runs) {
+        const key = x0 + ',' + x1, r = open.get(key);
+        if (r && prevZ === z - 1) { r[3] += CELL; next.set(key, r); open.delete(key); }
+        else { const nr = [x0 * CELL, z * CELL, (x1 - x0 + 1) * CELL, CELL]; RECTS.push(nr); next.set(key, nr); }
+      }
+      open.clear(); for (const [k2, v] of next) open.set(k2, v);
+      prevZ = z;
+    }
+  }
+
   // Precise collision data:
   //  block  - tiles that are solid by terrain (buildings, water, void)
   //  rects  - exact object footprints, bucketed per tile in grid

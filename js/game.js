@@ -116,7 +116,10 @@
   }
   function loadMap(id, tx, tz, dir) {
     // leaving the street: the city keeps living while you're inside (see stepWorld)
-    if (G.mapId === 'city' && id !== 'city' && G.map) G.world = { map: G.map, fp: G.fp, agents: G.agents.filter(a => a.kind !== 'npc' && !a.scripted && !a.hidden), cars: G.cars, cat: G.cat, ghost: { id: 'ghost', x: -500, z: -500, y: 0 } };
+    // leaving a street map: it keeps living while you're elsewhere (see stepWorld)
+    G.worlds = G.worlds || {};
+    if (G.map && G.map.outdoor && id !== G.mapId) G.worlds[G.mapId] = { map: G.map, fp: G.fp, agents: G.agents.filter(a => a.kind !== 'npc' && !a.scripted && !a.hidden), cars: G.cars, cat: G.cat, ghost: { id: 'ghost', x: -500, z: -500, y: 0 } };
+    G.world = G.worlds.city || null;
     freeScene();
     PT.list.length = 0;
     const map = MAPS[id]();
@@ -138,9 +141,10 @@
     p.y = groundY(p.x, p.z);
     G.agents = []; G.cars = []; G.cat = null; G.extraDraws = []; G.extraLights = [];
     let restored = false;
-    if (id === 'city' && G.world) {
+    const W0 = G.worlds && G.worlds[id];
+    if (W0 && map.outdoor) {
       // back outside: pick the street up exactly where it is now
-      G.agents = G.world.agents; G.cars = G.world.cars; G.cat = G.world.cat; G.world = null; restored = true;
+      G.agents = W0.agents; G.cars = W0.cars; G.cat = W0.cat; delete G.worlds[id]; G.world = G.worlds.city || null; restored = true;
       for (const a of G.agents) if (a.path && a.kind !== 'cop') { const g = a.path[a.path.length - 1]; if (!pathTo(a, g[0], g[1])) a.path = [g]; }
     }
     if (SIM.populate) SIM.populate(id, restored);
@@ -259,6 +263,8 @@
       for (const [dx, dz] of [[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [1, -1], [-1, 1], [-1, -1]]) {
         const nx = x + dx, nz = z + dz;
         if (!walkableTile(nx, nz) || (filter && !filter(nx, nz))) continue;
+        // never route through a door you aren't heading for
+        if (G.fp.walk.has(nx + ',' + nz) && !(nx === tx && nz === tz)) continue;
         if (dx && dz && (!walkableTile(x + dx, z) || !walkableTile(x, z + dz) || (filter && (!filter(x + dx, z) || !filter(x, z + dz))))) continue;
         if (!edgeOk(x, z, nx, nz)) continue;
         const g = gs.get(key(x, z)) + (dx && dz ? 1.414 : 1);
@@ -385,9 +391,9 @@
   }
 
   // the street while you're indoors: same people, same cars, still moving
-  function stepWorld(dt) {
-    const W = G.world, keep = { map: G.map, fp: G.fp, agents: G.agents, cars: G.cars, player: G.player, mapId: G.mapId, cat: G.cat };
-    G.map = W.map; G.fp = W.fp; G.agents = W.agents; G.cars = W.cars; G.player = W.ghost; G.mapId = 'city'; G.cat = W.cat;
+  function stepWorld(dt, W, id) {
+    const keep = { map: G.map, fp: G.fp, agents: G.agents, cars: G.cars, player: G.player, mapId: G.mapId, cat: G.cat };
+    G.map = W.map; G.fp = W.fp; G.agents = W.agents; G.cars = W.cars; G.player = W.ghost; G.mapId = id; G.cat = W.cat;
     try { for (const a of G.agents) stepAgent(a, dt); if (G.cat && SIM.stepCat) SIM.stepCat(G.cat, dt); if (SIM.stepWorld) SIM.stepWorld(dt); }
     catch (e) { console.error(e); }
     finally { W.agents = G.agents; W.cars = G.cars; W.cat = G.cat; Object.assign(G, keep); }
@@ -516,10 +522,10 @@
   }
   G.travel = travel;
   // where to stand when returning to the city through a given exit id
-  function returnPoint(back) {
-    const m = MAPS.city();
-    if (back === 'officedoor') { const d = MOTEL.frontDoor(G.S.tier); return [d.x + (G.S.tier <= 3 ? 0.6 : 0), d.z + (G.S.tier <= 3 ? 0 : 0.8), G.S.tier <= 3 ? 'right' : 'down']; }
-    if (back === 'room') { const r = G.S.flags.curRoom || 0; const d = MOTEL.roomDoor(r, G.S.tier); return [d.x, d.z + 1.1, 'down']; }
+  function returnPoint(back, mapId = 'city') {
+    const m = MAPS[mapId]();
+    if (mapId === 'city' && back === 'officedoor') { const d = MOTEL.frontDoor(G.S.tier); return [d.x + (G.S.tier <= 3 ? 0.6 : 0), d.z + (G.S.tier <= 3 ? 0 : 0.8), G.S.tier <= 3 ? 'right' : 'down']; }
+    if (mapId === 'city' && back === 'room') { const r = G.S.flags.curRoom || 0; const d = MOTEL.roomDoor(r, G.S.tier); return [d.x, d.z + 1.1, 'down']; }
     const ex = m.exits.find(e => e.id === back);
     if (ex) { const dx = ex.dir === 'right' ? 1.2 : ex.dir === 'left' ? -1.2 : 0, dz = ex.dir === 'down' || ex.dir === 'up' ? 1.3 : 0; return [ex.x + (ex.w || 1) / 2 + dx, ex.z + (ex.h || 1) / 2 + dz, ex.dir === 'right' ? 'right' : 'down']; }
     return [m.spawn.x, m.spawn.z, 'down'];
@@ -533,7 +539,7 @@
         if (G.lastExitTile === tx + ',' + tz) return;
         G.lastExitTile = tx + ',' + tz;
         if (e.need && !G.S.flags[e.need]) { run(() => STORY.blocked(e)); p.path = null; nudgeBack(e); return; }
-        if (e.to === 'city') { const [x, z, d] = returnPoint(e.back); travel('city', x, z, d); }
+        if (e.tx == null && (e.back || e.to === 'city')) { const [x, z, d] = returnPoint(e.back, e.to); travel(e.to, x, z, d); }
         else travel(e.to, e.tx, e.tz, e.dir);
         return;
       }
@@ -629,7 +635,7 @@
     }
     for (const a of G.agents) stepAgent(a, dt);
     if (G.cat) SIM.stepCat && SIM.stepCat(G.cat, dt);
-    if (G.world && G.mapId !== 'city') stepWorld(dt);
+    if (G.worlds) for (const k in G.worlds) if (k !== G.mapId) stepWorld(dt, G.worlds[k], k);
     if (SIM.update) SIM.update(dt);
     checkExits();
     updateEnv(dt);
@@ -721,7 +727,7 @@
     }
     // people
     const p = G.player;
-    pushChar(out, 'player', CHARS.CAST.player, p.x, p.y || 0, p.z, p.yaw, Object.assign({ t: G.t, walk: p.walk, speed: p.speed, talk: UI.speaking('player') ? 1 : 0 }, p.pose || {}));
+    pushChar(out, G.playerKey ? G.playerKey() : 'player', G.playerLook ? G.playerLook() : CHARS.CAST.player, p.x, p.y || 0, p.z, p.yaw, Object.assign({ t: G.t, walk: p.walk, speed: p.speed, talk: UI.speaking('player') ? 1 : 0 }, p.pose || {}));
     for (const a of G.agents) {
       if (a.hidden) continue;
       if (!onScreen([a.x - 1, 0, a.z - 1, a.x + 1, 2, a.z + 1])) continue;

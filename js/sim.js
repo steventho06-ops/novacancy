@@ -272,11 +272,13 @@
 
   // ---------------- populate a map with people & cars ----------------
   SIM.populate = function (mapId, restored) {
+    if (G.map && G.map.onPopulate) G.map.onPopulate(restored);
     const s = S();
     // story characters
     for (const n of STORY.npcs(mapId)) G.addAgent(Object.assign({ kind: 'npc' }, n));
     if (mapId === 'office' || mapId === 'lobby') SIM.waiting().forEach(g => spawnGuestAgent(g, 'queue'));
-    if (mapId === 'city' && restored) {
+    const outdoor = G.map && G.map.outdoor;
+    if (outdoor && restored) {
       // the street kept going while you were inside; just top up the police if heat rose
       const want = Math.min(4, 1 + Math.floor(s.heat)), have = G.agents.filter(a => a.kind === 'cop').length;
       if (have < want) spawnCops(have);
@@ -286,12 +288,14 @@
       // guests hanging out by their rooms in the evening
       const h = G.hour();
       if (s.tier <= 3) for (const g of SIM.staying()) if (g.room >= 0 && (h > 17 || h < 1) && Math.random() < 0.45) spawnGuestAgent(g, 'room');
-      spawnTraffic();
-      for (let i = 0; i < (G.lowGfx ? 5 : 10); i++) spawnPed(true);
-      spawnCops();
       SIM.spawnCat();
     }
-    if (mapId === 'office' && !(G.world && G.world.cat)) SIM.spawnCat(true);
+    if (outdoor) {
+      spawnTraffic();
+      for (let i = 0; i < (G.lowGfx ? 5 : (G.map.peds || 10)); i++) spawnPed(true);
+      spawnCops();
+    }
+    if (mapId === 'office' && !(G.worlds && G.worlds.city && G.worlds.city.cat)) SIM.spawnCat(true);
   };
   SIM.spawnCat = function (inside) {
     if (S().flags.noCat) return;
@@ -318,7 +322,7 @@
   };
 
   // ---------------- traffic ----------------
-  const LANES = [
+  const LANES0 = [
     { axis: 'z', x: 27.25, dir: 1, from: -30, to: 110 },    // southbound
     { axis: 'z', x: 30.75, dir: -1, from: 110, to: -30 },   // northbound
     { axis: 'x', z: 47.25, dir: -1, from: 48, to: -30 },    // westbound
@@ -327,8 +331,9 @@
   const CAR_COLS = ['#c8443c', '#2f6a9a', '#e8e2d8', '#3a3a44', '#3a8a5a', '#8a4a9a', '#e8833a', '#5a6a7a', '#d8c25a'];
   function spawnTraffic() {
     G.cars = [];
-    const n = G.lowGfx ? 6 : 10;
+    const n = G.lowGfx ? 6 : (G.map.cars || 10);
     for (let i = 0; i < n; i++) {
+      const LANES = G.map.lanes || LANES0;
       const L = LANES[i % LANES.length];
       const t = Math.random();
       const pos = L.from + (L.to - L.from) * t;
@@ -369,7 +374,7 @@
   }
 
   // ---------------- pedestrians ----------------
-  const WALKS = [[25.2, 2], [25.2, 76], [32.8, 2], [32.8, 76], [2, 45], [48, 45], [2, 52.8], [48, 52.8], [16, 4], [40, 44.6], [8, 53], [36, 53]];
+  const WALKS0 = [[25.2, 2], [25.2, 76], [32.8, 2], [32.8, 76], [2, 45], [48, 45], [2, 52.8], [48, 52.8], [16, 4], [40, 44.6], [8, 53], [36, 53]];
   // pedestrians keep to sidewalks and cross at crosswalks, waiting for cars
   function inCross(x, z) { for (const c of G.map.crosswalks || []) if (x >= c.x0 && x <= c.x1 && z >= c.z0 && z <= c.z1) return c; return null; }
   const pedFilter = (x, z) => G.map.tile(x, z) !== 'road' || !!inCross(x, z);
@@ -391,9 +396,10 @@
   SIM.pedFilter = pedFilter; SIM.pedGate = pedGate;
   let pedN = 0;
   function spawnPed(anywhere) {
-    if (G.agents.filter(a => a.kind === 'ped').length >= (G.lowGfx ? 5 : 11)) return;
+    if (G.agents.filter(a => a.kind === 'ped').length >= (G.lowGfx ? 5 : (G.map.peds || 10) + 1)) return;
     const seed = Math.floor(Math.random() * 160); // a pool of 160 different faces and outfits
     pedN++;
+    const WALKS = G.map.walks || WALKS0;
     const start = pick(WALKS);
     let x = start[0], z = start[1];
     if (anywhere) { const b = pick(WALKS); const t = Math.random(); x = start[0] + (b[0] - start[0]) * t; z = start[1] + (b[1] - start[1]) * t; const n = G.nearestWalkable(x, z); if (n) { x = n[0]; z = n[1]; } }
@@ -409,22 +415,23 @@
     return best;
   }
   function pedNext(a) {
-    const t = pick(WALKS);
+    const t = pick(G.map.walks || WALKS0);
     if (!G.pathTo(a, t[0] + rnd(-0.3, 0.3), t[1])) { G.removeAgent(a); return; }
     a.onArrive = () => { if (Math.random() < 0.5) { G.removeAgent(a); spawnPed(false); } else pedNext(a); };
   }
 
   // ---------------- police ----------------
-  const BEATS = [[[25.2, 30], [25.2, 60], [12, 53], [25.2, 60]], [[32.8, 10], [32.8, 44], [45, 44.8], [32.8, 44]], [[8, 45.2], [24.6, 45.2], [24.6, 30], [24.6, 45.2]], [[3.2, 6], [22, 6], [24.6, 20], [22, 6]]];
+  const BEATS0 = [[[25.2, 30], [25.2, 60], [12, 53], [25.2, 60]], [[32.8, 10], [32.8, 44], [45, 44.8], [32.8, 44]], [[8, 45.2], [24.6, 45.2], [24.6, 30], [24.6, 45.2]], [[3.2, 6], [22, 6], [24.6, 20], [22, 6]]];
   function spawnCops(from = 0) {
     const s = S();
     const n = Math.min(4, 1 + Math.floor(s.heat));
     for (let i = from; i < n; i++) {
+      const BEATS = G.map.beats || BEATS0;
       const beat = BEATS[i % BEATS.length];
       // start somewhere along the beat, not always at the same corner
       const bi = Math.floor(Math.random() * beat.length), a0 = beat[bi], a1 = beat[(bi + 1) % beat.length], t = Math.random();
       const [x, z] = G.nearestWalkable(a0[0] + (a1[0] - a0[0]) * t, a0[1] + (a1[1] - a0[1]) * t) || a0;
-      const isReyes = i === 0 && s.flags.metReyes;
+      const isReyes = i === 0 && s.flags.metReyes && G.mapId === 'city';
       const a = G.addAgent({ id: isReyes ? 'reyes' : 'cop' + i, kind: 'cop', name: isReyes ? 'Officer Reyes' : 'Officer', look: isReyes ? CHARS.CAST.reyes : CHARS.CAST.cop, lookKey: isReyes ? 'reyes' : 'cop', x, z, spd: 1.5, beat, bi: bi + 1, susp: 0 });
       copNext(a);
     }
@@ -480,7 +487,7 @@
     const now = Math.floor(abs());
     if (s.lastMin == null || now - s.lastMin > 2000) s.lastMin = now;
     while (s.lastMin < now) { s.lastMin++; minuteEvents(s.lastMin); }
-    if (G.mapId === 'city') {
+    if (G.map && G.map.outdoor) {
       stepTraffic(dt);
       stepCops(dt);
       if (Math.random() < dt * 0.15) spawnPed(false);
