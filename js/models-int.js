@@ -14,6 +14,7 @@
       if (t === 'void') continue;
       let c = fc;
       if (wl.checker) c = (i + j) % 2 ? '#e8e2d8' : '#2a2a30';
+      if (wl.tint) c = wl.tint(i, j, t) || c;
       mb.quad([i, 0, j + 1], [i + 1, 0, j + 1], [i + 1, 0, j], [i, 0, j], c, { mat: W(fm, wear * (0.7 + 0.5 * R(i, j, 2))), jit: 0.01 });
     }
     // edges of the diorama (thick floor slab)

@@ -38,7 +38,8 @@ Phone → Settings → **Night** switches between Dark, Normal and Bright nights
 
 Walk north up Sunset Blvd, ride the bus from the stop by the motel ($2), or take a cab ($12). Downtown has:
 
-- **Aurora Tower**: buy the penthouse ($18,000) from the concierge. Sleep, stash your goods, soak in the hot tub (cools your heat), change outfits.
+- **Aurora Tower**: the concierge has three residences: the Sky Loft (floor 30), the Corner Suite (floor 34) and The Crown (the whole top floor, with a terrace and infinity pool). Tour any of them, rent by the week (charged every 7 days, from cash then bank; two missed payments and you're out) or buy outright. Floor-to-ceiling glass looks out on a living skyline: lit windows change through the night, traffic streams along the highway, helicopters, planes and a blimp drift past, and roof beacons blink.
+- **Habitat** (phone app): order furniture: 30+ modern pieces (sofas, a king bed, home theater, gaming setup, reef aquarium, grand piano, fireplace, hot tub, art and more). Free delivery the next morning at 9 AM, or Express for +25% and it arrives right away. Then place it yourself: pick an item, tap the floor, rotate, place. Move or store anything later. Most pieces do something (sleep, relax, watch, play, study, run, soak).
 - **First Harbor Bank**: deposit cash (1% interest a night, safe from cops and raids). ATMs on the street.
 - **Lucky 7 Casino**: blackjack and slots.
 - **Daily Grind** (coffee), **Silk & Steel** (outfits), **Central Park** (chess with Old Man Ito, hot dogs, a busker, the fountain).

@@ -94,6 +94,7 @@
   function upload(mb) { return mb && mb.count ? G.R.upload(mb.data()) : null; }
   G.upload = upload;
   function cached(key, fn) { if (!G.meshCache[key]) { const mb = new MB(); fn(mb); G.meshCache[key] = upload(mb); } return G.meshCache[key]; }
+  G.meshFor = cached;
   G.cached = cached;
   function charMeshes(key, look) {
     const ck = 'ch:' + key;
@@ -163,6 +164,7 @@
     else if (e.k.light) { const B = BUILD.buildMap(G.map, ctx()); G.scene.lights = B.lights; }
   }
   G.refresh = refresh;
+  G.rebuildMap = () => { G.map = MAPS[G.mapId](); G.refreshAll(); };
   G.refreshAll = () => { const p = G.player; const keep = { x: p.x, z: p.z, yaw: p.yaw }; const ag = G.agents, cars = G.cars; loadMapKeep(); p.x = keep.x; p.z = keep.z; p.yaw = keep.yaw; };
   function loadMapKeep() {
     freeScene();
@@ -446,6 +448,7 @@
   G.groundAt = groundAt;
 
   function tap(sx, sy) {
+    if (G.tapHook && G.tapHook(sx, sy)) return;
     if (G.busy || UI.blocking()) return;
     const [gx, gz] = groundAt(sx, sy);
     let best = null, bd = 1e9;
@@ -565,7 +568,12 @@
     const E = G.R.env;
     let T;
     if (G.map.underground) T = UNDER;
-    else if (G.map.indoor) T = INDOOR;
+    else if (G.map.indoor && !G.map.view) T = INDOOR;
+    else if (G.map.view) {
+      // a room with floor-to-ceiling windows: real sky and sun, plus the apartment's own fill light
+      const o = envAt(G.hour()), mx = (a, b) => a.map((v, i) => Math.max(v, b[i]));
+      T = Object.assign({}, o, { sky: mx(o.sky, [0.46, 0.44, 0.5]), ground: mx(o.ground, [0.24, 0.21, 0.22]), bloom: Math.max(o.bloom, 0.55) });
+    }
     else T = envAt(G.hour());
     // night brightness setting (Phone > Settings): lifts the moonlight and ambient fill
     const nb = G.nightBoost || 1, nn = G.map.indoor && !G.map.underground ? 0 : (T.night || 0);
@@ -743,7 +751,7 @@
       if (!onScreen([car.x - 2, 0, car.z - 2, car.x + 2, 2, car.z + 2])) continue;
       out.push({ mesh: carMesh(car.kind, car.col), model: M4.trs(car.x, 0.01, car.z, car.yaw) });
     }
-    for (const d of G.extraDraws) { const v = typeof d === 'function' ? d() : d; if (v) out.push(v); }
+    for (const d of G.extraDraws) { const v = typeof d === 'function' ? d() : d; if (Array.isArray(v)) out.push(...v); else if (v) out.push(v); }
     return out;
   }
   function pushChar(out, key, look, x, y, z, yaw, st) {

@@ -320,7 +320,7 @@
   // ---------------- hitboxes from geometry ----------------
   // Everything at body height (between ankle and head) blocks. Each triangle is rasterised onto
   // a fine grid seen from above; vertical faces count as their edge. Cells merge into rectangles.
-  const AUTO_SKIP = new Set(['motel', 'moteloffice', 'roomdoor', 'officedoor', 'npcspot', 'pool', 'mess', 'hole', 'wiring', 'bedroll', 'rug', 'oilstain', 'manhole', 'parking', 'court', 'tracks', 'metrostairs', 'billboard', 'tube', 'neonstrip', 'ceilfan', 'chandelier', 'window', 'ac', 'nets', 'skyline']);
+  const AUTO_SKIP = new Set(['motel', 'moteloffice', 'roomdoor', 'officedoor', 'npcspot', 'pool', 'mess', 'hole', 'wiring', 'bedroll', 'rug', 'oilstain', 'manhole', 'parking', 'court', 'tracks', 'metrostairs', 'billboard', 'tube', 'neonstrip', 'ceilfan', 'chandelier', 'window', 'ac', 'nets', 'skyline', 'skyview', 'ledlight']);
   const CELL = 0.2, Y0 = 0.24, Y1 = 1.7;
   function autoFoot(a, s, e) {
     if (e <= s) return;
